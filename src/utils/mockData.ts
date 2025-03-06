@@ -14,13 +14,28 @@ export interface EmergencyRequest {
     }
   };
   description: string;
+  patientName?: string;
+  patientAge?: string;
+  patientGender?: string;
+  emergencyType?: string;
+  additionalInfo?: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
   status: 'pending' | 'assigned' | 'in-progress' | 'completed' | 'cancelled';
   timestamp: Date;
   assignedTo?: string;
+  driverName?: string;
+  driverPhone?: string;
+  driverPhoto?: string;
+  ambulanceId?: string;
   estimatedArrival?: Date;
   completedAt?: Date;
   notes?: string[];
+  messages?: {
+    id: string;
+    sender: string;
+    text: string;
+    timestamp: Date;
+  }[];
 }
 
 export interface Driver {
@@ -31,135 +46,128 @@ export interface Driver {
     coordinates: {
       lat: number;
       lng: number;
-    }
+    };
+    address?: string;
   };
   currentAssignment?: string;
   completedAssignments: number;
+  driverId?: string;
+  ambulanceId?: string;
+  licenseNumber?: string;
+  photoUrl?: string;
+  phone?: string;
 }
 
-// Sample emergency requests
-export const mockRequests: EmergencyRequest[] = [
-  {
-    id: 'req_001',
-    userId: 'user_123',
-    userName: 'John Doe',
-    userPhone: '555-123-4567',
-    location: {
-      address: '123 Main St, Downtown',
-      coordinates: {
-        lat: 37.7749,
-        lng: -122.4194
-      }
-    },
-    description: 'Car accident with multiple injuries. Two vehicles involved, one person unconscious.',
-    severity: 'critical',
-    status: 'pending',
-    timestamp: new Date(Date.now() - 1000 * 60 * 15) // 15 minutes ago
-  },
-  {
-    id: 'req_002',
-    userId: 'user_124',
-    userName: 'Jane Smith',
-    userPhone: '555-987-6543',
-    location: {
-      address: '456 Oak Ave, Westside',
-      coordinates: {
-        lat: 37.7735,
-        lng: -122.4168
-      }
-    },
-    description: 'Elderly person having difficulty breathing, possible COVID symptoms.',
-    severity: 'high',
-    status: 'assigned',
-    timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
-    assignedTo: '2',
-    estimatedArrival: new Date(Date.now() + 1000 * 60 * 10) // 10 minutes from now
-  },
-  {
-    id: 'req_003',
-    userId: 'user_125',
-    userName: 'Robert Johnson',
-    userPhone: '555-345-6789',
-    location: {
-      address: '789 Pine St, Eastside',
-      coordinates: {
-        lat: 37.7801,
-        lng: -122.4100
-      }
-    },
-    description: 'Child with high fever and seizures.',
-    severity: 'high',
-    status: 'in-progress',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    assignedTo: '3',
-    estimatedArrival: new Date(Date.now() - 1000 * 60 * 5) // 5 minutes ago (already arrived)
-  },
-  {
-    id: 'req_004',
-    userId: 'user_126',
-    userName: 'Sarah Williams',
-    userPhone: '555-890-1234',
-    location: {
-      address: '101 Cedar Blvd, Northside',
-      coordinates: {
-        lat: 37.7850,
-        lng: -122.4200
-      }
-    },
-    description: 'Possible broken arm from sports injury. No bleeding but severe pain.',
-    severity: 'medium',
-    status: 'completed',
-    timestamp: new Date(Date.now() - 1000 * 60 * 120), // 2 hours ago
-    assignedTo: '2',
-    estimatedArrival: new Date(Date.now() - 1000 * 60 * 95), // arrived 95 minutes ago
-    completedAt: new Date(Date.now() - 1000 * 60 * 60) // completed 1 hour ago
-  },
-  {
-    id: 'req_005',
-    userId: 'user_127',
-    userName: 'Michael Brown',
-    userPhone: '555-567-8901',
-    location: {
-      address: '222 Maple Dr, Southside',
-      coordinates: {
-        lat: 37.7700,
-        lng: -122.4180
-      }
-    },
-    description: 'Allergic reaction, swelling in face and throat, difficulty swallowing.',
-    severity: 'high',
-    status: 'pending',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5) // 5 minutes ago
-  }
-];
+// Sample emergency requests - start with an empty array
+export const mockRequests: EmergencyRequest[] = [];
 
-// Sample drivers
+// Sample drivers - populate from the User data in AuthContext
 export const mockDrivers: Driver[] = [
   {
     id: '2', // Matches User ID for the driver
     name: 'Driver One',
-    status: 'busy',
+    status: 'available',
     location: {
       coordinates: {
         lat: 37.7735,
         lng: -122.4210
-      }
+      },
+      address: 'Downtown Medical Center'
     },
-    currentAssignment: 'req_002',
-    completedAssignments: 45
+    completedAssignments: 45,
+    driverId: 'DRV001',
+    ambulanceId: 'AMB001',
+    licenseNumber: 'LIC001',
+    phone: '123-456-7891'
   },
   {
     id: '3', // Matches User ID for the driver
     name: 'Driver Two',
-    status: 'busy',
+    status: 'available',
     location: {
       coordinates: {
         lat: 37.7790,
         lng: -122.4120
-      }
+      },
+      address: 'North District Hospital'
     },
-    currentAssignment: 'req_003',
-    completedAssignments: 32
+    completedAssignments: 32,
+    driverId: 'DRV002',
+    ambulanceId: 'AMB002',
+    licenseNumber: 'LIC002',
+    phone: '123-456-7892'
+  }
+];
+
+// Add additional 18 drivers to have a total of 20 (matching the auth context)
+for (let i = 3; i <= 20; i++) {
+  mockDrivers.push({
+    id: `${i+1}`,
+    name: `Driver ${i}`,
+    status: i % 3 === 0 ? 'busy' : (i % 4 === 0 ? 'offline' : 'available'),
+    location: {
+      coordinates: {
+        lat: 37.7749 + (Math.random() * 0.02 - 0.01),
+        lng: -122.4194 + (Math.random() * 0.02 - 0.01)
+      },
+      address: i % 4 === 0 ? 'Off duty' : 'Central Hospital'
+    },
+    currentAssignment: i % 3 === 0 ? `req_dummy_${i}` : undefined,
+    completedAssignments: Math.floor(Math.random() * 50),
+    driverId: `DRV0${i < 10 ? '0' + i : i}`,
+    ambulanceId: `AMB0${i < 10 ? '0' + i : i}`,
+    licenseNumber: `LIC0${i < 10 ? '0' + i : i}`,
+    phone: `123-456-${7890 + i}`
+  });
+}
+
+// First aid tips for requesters
+export const firstAidTips = [
+  {
+    type: 'general',
+    tips: [
+      'Stay calm and reassure the patient',
+      'Ensure the scene is safe for you and the patient',
+      'Do not move the patient unless in immediate danger',
+      'Keep the patient warm and comfortable'
+    ]
+  },
+  {
+    type: 'accident',
+    tips: [
+      'Check for responsiveness by tapping and shouting',
+      'Check for breathing and circulation',
+      'Apply pressure to stop any bleeding',
+      'Do not remove embedded objects from wounds',
+      'Immobilize injured limbs if possible'
+    ]
+  },
+  {
+    type: 'breathing',
+    tips: [
+      'Keep the person upright to ease breathing',
+      'Loosen any tight clothing around neck or chest',
+      'Help them use their medication if they have it',
+      'If they become unconscious, place in recovery position'
+    ]
+  },
+  {
+    type: 'unconscious',
+    tips: [
+      'Check for breathing and clear airways',
+      'If breathing, place in recovery position (on their side)',
+      'Monitor breathing until help arrives',
+      'If not breathing, start CPR if trained to do so'
+    ]
+  },
+  {
+    type: 'childbirth',
+    tips: [
+      'Make the mother comfortable and ensure privacy',
+      'Time contractions and look for signs of imminent delivery',
+      'If delivery is progressing, have mother lie down with knees bent',
+      'Support the baby's head as it emerges, never pull'
+    ]
   }
 ];
 
@@ -185,6 +193,11 @@ export const addEmergencyRequest = (
   userName: string, 
   location: { address: string; coordinates: { lat: number; lng: number } },
   description: string,
+  patientName?: string,
+  patientAge?: string,
+  patientGender?: string,
+  emergencyType?: string,
+  additionalInfo?: string,
   userPhone?: string
 ): EmergencyRequest => {
   // Analyze severity based on keywords in description (simplified AI simulation)
@@ -211,9 +224,15 @@ export const addEmergencyRequest = (
     userPhone,
     location,
     description,
+    patientName,
+    patientAge,
+    patientGender,
+    emergencyType,
+    additionalInfo,
     severity,
     status: 'pending',
-    timestamp: new Date()
+    timestamp: new Date(),
+    messages: []
   };
   
   // Add to mock data
@@ -230,6 +249,10 @@ export const assignDriver = (requestId: string, driverId: string): void => {
   if (request && driver) {
     request.status = 'assigned';
     request.assignedTo = driverId;
+    request.driverName = driver.name;
+    request.driverPhone = driver.phone;
+    request.driverPhoto = driver.photoUrl;
+    request.ambulanceId = driver.ambulanceId;
     
     // Calculate estimated arrival (for demo purposes: 5-15 minutes from now)
     const randomMinutes = Math.floor(Math.random() * 10) + 5;
@@ -238,6 +261,41 @@ export const assignDriver = (requestId: string, driverId: string): void => {
     // Update driver status
     driver.status = 'busy';
     driver.currentAssignment = requestId;
+    
+    // Initialize messages array if it doesn't exist
+    if (!request.messages) {
+      request.messages = [];
+    }
+    
+    // Add system message about assignment
+    request.messages.push({
+      id: `msg_${Date.now().toString(36)}`,
+      sender: 'system',
+      text: `Ambulance ${driver.ambulanceId} has been assigned to your request. Driver ${driver.name} is on the way.`,
+      timestamp: new Date()
+    });
+  }
+};
+
+// Mock function to add a message to a request
+export const addMessageToRequest = (
+  requestId: string,
+  sender: string,
+  text: string
+): void => {
+  const request = mockRequests.find(req => req.id === requestId);
+  
+  if (request) {
+    if (!request.messages) {
+      request.messages = [];
+    }
+    
+    request.messages.push({
+      id: `msg_${Date.now().toString(36)}`,
+      sender,
+      text,
+      timestamp: new Date()
+    });
   }
 };
 
@@ -255,10 +313,34 @@ export const updateRequestStatus = (
     if (status === 'in-progress') {
       // Ambulance has arrived
       request.estimatedArrival = new Date();
+      
+      // Add system message
+      if (!request.messages) {
+        request.messages = [];
+      }
+      
+      request.messages.push({
+        id: `msg_${Date.now().toString(36)}`,
+        sender: 'system',
+        text: 'The ambulance has arrived at your location.',
+        timestamp: new Date()
+      });
     }
     
     if (status === 'completed') {
       request.completedAt = new Date();
+      
+      // Add system message
+      if (!request.messages) {
+        request.messages = [];
+      }
+      
+      request.messages.push({
+        id: `msg_${Date.now().toString(36)}`,
+        sender: 'system',
+        text: 'This emergency request has been completed.',
+        timestamp: new Date()
+      });
       
       // Free up the driver
       if (request.assignedTo) {
@@ -278,4 +360,12 @@ export const updateRequestStatus = (
       request.notes.push(note);
     }
   }
+};
+
+// Get first aid tips based on emergency type
+export const getFirstAidTips = (emergencyType?: string) => {
+  if (!emergencyType) return firstAidTips.find(t => t.type === 'general')?.tips || [];
+  
+  const specificTips = firstAidTips.find(t => t.type === emergencyType.toLowerCase())?.tips;
+  return specificTips || firstAidTips.find(t => t.type === 'general')?.tips || [];
 };

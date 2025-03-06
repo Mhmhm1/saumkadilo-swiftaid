@@ -9,6 +9,13 @@ export interface User {
   email: string;
   role: 'requester' | 'driver' | 'admin';
   phone?: string;
+  driverId?: string;
+  ambulanceId?: string;
+  licenseNumber?: string;
+  photoUrl?: string;
+  status?: 'available' | 'busy' | 'offline';
+  currentLocation?: string;
+  currentJob?: string;
 }
 
 interface AuthContextType {
@@ -20,6 +27,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isDriver: boolean;
   isRequester: boolean;
+  updateDriverStatus: (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -38,22 +46,54 @@ const mockUsers: User[] = [
     name: 'Driver One',
     email: 'driver1@swiftaid.com',
     role: 'driver',
-    phone: '123-456-7891'
+    phone: '123-456-7891',
+    driverId: 'DRV001',
+    ambulanceId: 'AMB001',
+    licenseNumber: 'LIC001',
+    status: 'available',
+    currentLocation: 'Downtown Medical Center'
   },
   {
     id: '3',
     name: 'Driver Two',
     email: 'driver2@swiftaid.com',
     role: 'driver',
-    phone: '123-456-7892'
+    phone: '123-456-7892',
+    driverId: 'DRV002',
+    ambulanceId: 'AMB002',
+    licenseNumber: 'LIC002',
+    status: 'available',
+    currentLocation: 'North District Hospital'
   }
 ];
 
-export const mockPasswords = {
+// Add additional 18 drivers to have a total of 20
+for (let i = 3; i <= 20; i++) {
+  mockUsers.push({
+    id: `${i+1}`,
+    name: `Driver ${i}`,
+    email: `driver${i}@swiftaid.com`,
+    role: 'driver',
+    phone: `123-456-${7890 + i}`,
+    driverId: `DRV0${i < 10 ? '0' + i : i}`,
+    ambulanceId: `AMB0${i < 10 ? '0' + i : i}`,
+    licenseNumber: `LIC0${i < 10 ? '0' + i : i}`,
+    status: i % 3 === 0 ? 'busy' : (i % 4 === 0 ? 'offline' : 'available'),
+    currentLocation: i % 4 === 0 ? 'Off duty' : 'Central Hospital',
+    currentJob: i % 3 === 0 ? 'Transporting patient to hospital' : undefined
+  });
+}
+
+export const mockPasswords: Record<string, string> = {
   'admin@swiftaid.com': 'admin123',
   'driver1@swiftaid.com': 'driver123',
   'driver2@swiftaid.com': 'driver123'
 };
+
+// Add passwords for additional drivers
+for (let i = 3; i <= 20; i++) {
+  mockPasswords[`driver${i}@swiftaid.com`] = 'driver123';
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -144,6 +184,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateDriverStatus = (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => {
+    if (!currentUser || currentUser.role !== 'driver') {
+      return;
+    }
+
+    const updatedUser = {
+      ...currentUser,
+      status,
+      currentLocation: location || currentUser.currentLocation,
+      currentJob: job || currentUser.currentJob
+    };
+
+    setCurrentUser(updatedUser);
+    localStorage.setItem('swiftaid_user', JSON.stringify(updatedUser));
+
+    // Also update in mock data
+    const userIndex = mockUsers.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+      mockUsers[userIndex] = updatedUser;
+    }
+
+    toast.success(`Status updated to ${status}`);
+  };
+
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('swiftaid_user');
@@ -163,7 +227,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     isAdmin,
     isDriver,
-    isRequester
+    isRequester,
+    updateDriverStatus
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

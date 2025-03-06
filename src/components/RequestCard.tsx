@@ -3,10 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, User, Phone, AlertTriangle, CheckCircle, Ambulance } from 'lucide-react';
+import { Clock, MapPin, User, Phone, AlertTriangle, CheckCircle, Ambulance, MessageSquare } from 'lucide-react';
 import { EmergencyRequest } from '@/utils/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface RequestCardProps {
   request: EmergencyRequest;
@@ -15,6 +16,7 @@ interface RequestCardProps {
   onAssign?: (requestId: string) => void;
   onStartResponse?: (requestId: string) => void;
   onComplete?: (requestId: string) => void;
+  onViewMessages?: (requestId: string) => void;
 }
 
 const RequestCard: React.FC<RequestCardProps> = ({
@@ -23,7 +25,8 @@ const RequestCard: React.FC<RequestCardProps> = ({
   isDriver = false,
   onAssign,
   onStartResponse,
-  onComplete
+  onComplete,
+  onViewMessages
 }) => {
   // Get badge color based on severity
   const getSeverityColor = (severity: string) => {
@@ -68,6 +71,9 @@ const RequestCard: React.FC<RequestCardProps> = ({
     }
   };
 
+  // Count unread messages (for demo purposes, just show if there are messages)
+  const hasMessages = request.messages && request.messages.length > 0;
+
   return (
     <Card className={cn(
       "overflow-hidden transition-all duration-300 hover:shadow-md border",
@@ -84,6 +90,13 @@ const RequestCard: React.FC<RequestCardProps> = ({
               {request.status === 'in-progress' ? 'In Progress' : 
                 request.status.charAt(0).toUpperCase() + request.status.slice(1)}
             </Badge>
+            
+            {hasMessages && (
+              <Badge variant="outline" className="ml-2 bg-primary/20 text-primary border-primary/50">
+                <MessageSquare className="w-3 h-3 mr-1" />
+                Messages
+              </Badge>
+            )}
           </div>
           <div className="text-sm text-muted-foreground flex items-center">
             <Clock className="w-3 h-3 mr-1" />
@@ -102,6 +115,9 @@ const RequestCard: React.FC<RequestCardProps> = ({
           <div className="flex items-center">
             <User className="w-3 h-3 mr-2 text-muted-foreground" />
             <span>{request.userName}</span>
+            {request.patientName && request.patientName !== request.userName && (
+              <span className="ml-1 text-muted-foreground">(Patient: {request.patientName})</span>
+            )}
           </div>
           
           {request.userPhone && (
@@ -111,21 +127,52 @@ const RequestCard: React.FC<RequestCardProps> = ({
             </div>
           )}
           
-          {request.assignedTo && (
-            <div className="flex items-center mt-2">
-              <Ambulance className="w-3 h-3 mr-2 text-primary" />
-              <span>Ambulance assigned</span>
+          {request.emergencyType && (
+            <div className="flex items-center mt-1">
+              <AlertTriangle className="w-3 h-3 mr-2 text-muted-foreground" />
+              <span>{request.emergencyType}</span>
+              {request.patientAge && (
+                <span className="ml-2 text-muted-foreground">Age: {request.patientAge}</span>
+              )}
+              {request.patientGender && (
+                <span className="ml-2 text-muted-foreground">Gender: {request.patientGender}</span>
+              )}
             </div>
           )}
           
-          {request.estimatedArrival && request.status !== 'completed' && (
-            <div className="flex items-center mt-1">
-              <Clock className="w-3 h-3 mr-2 text-primary" />
-              <span>
-                {new Date() > request.estimatedArrival 
-                  ? 'Arrived' 
-                  : `ETA: ${formatTime(request.estimatedArrival)}`}
-              </span>
+          {request.assignedTo && (request.status !== 'completed') && (
+            <div className="mt-2 p-2 bg-muted/20 rounded-md">
+              <div className="flex items-center">
+                <Ambulance className="w-3 h-3 mr-2 text-primary" />
+                <span className="font-medium">Ambulance {request.ambulanceId}</span>
+              </div>
+              
+              <div className="flex items-center mt-1">
+                <div className="flex items-center flex-1">
+                  <Avatar className="h-5 w-5 mr-2">
+                    <AvatarImage src={request.driverPhoto} alt={request.driverName} />
+                    <AvatarFallback className="text-xs">{request.driverName?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span>{request.driverName}</span>
+                </div>
+                
+                {request.driverPhone && (
+                  <a href={`tel:${request.driverPhone}`} className="text-primary">
+                    <Phone className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+              
+              {request.estimatedArrival && (
+                <div className="flex items-center mt-1 text-xs">
+                  <Clock className="w-3 h-3 mr-1 text-muted-foreground" />
+                  <span>
+                    {new Date() > request.estimatedArrival 
+                      ? 'Arrived' 
+                      : `ETA: ${formatTime(request.estimatedArrival)}`}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -163,7 +210,18 @@ const RequestCard: React.FC<RequestCardProps> = ({
           </Button>
         )}
         
-        {(!isAdmin && !isDriver) && (
+        {request.status !== 'completed' && (
+          <Button 
+            variant="outline"
+            className="w-full ml-2"
+            onClick={() => onViewMessages && onViewMessages(request.id)}
+          >
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Messages
+          </Button>
+        )}
+        
+        {(!isAdmin && !isDriver && request.status === 'pending') && (
           <Button 
             variant="outline"
             className="w-full"

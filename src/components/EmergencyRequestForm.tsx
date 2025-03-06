@@ -5,12 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/context/AuthContext';
 import { addEmergencyRequest } from '@/utils/mockData';
-import { AlertTriangle, MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EmergencyRequestForm = () => {
   const { currentUser } = useAuth();
@@ -21,6 +21,11 @@ const EmergencyRequestForm = () => {
   const [loading, setLoading] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
+  const [patientName, setPatientName] = useState(currentUser?.name || '');
+  const [patientAge, setPatientAge] = useState('');
+  const [patientGender, setPatientGender] = useState('');
+  const [emergencyType, setEmergencyType] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
 
   // Get current location
   const handleGetLocation = () => {
@@ -97,6 +102,11 @@ const EmergencyRequestForm = () => {
         currentUser.name,
         locationData,
         description,
+        patientName,
+        patientAge,
+        patientGender,
+        emergencyType,
+        additionalInfo,
         currentUser.phone
       );
       
@@ -111,7 +121,7 @@ const EmergencyRequestForm = () => {
   };
 
   return (
-    <Card className="glass-card animate-scale max-w-lg mx-auto">
+    <Card className="glass-card animate-scale max-w-2xl mx-auto">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Emergency Request</CardTitle>
         <CardDescription className="text-center">
@@ -119,13 +129,6 @@ const EmergencyRequestForm = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert variant="destructive" className="mb-4 border-emergency/30 bg-emergency/10 text-emergency-foreground">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            If this is a life-threatening emergency, please also call 911 immediately.
-          </AlertDescription>
-        </Alert>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="location">Your Location</Label>
@@ -154,6 +157,70 @@ const EmergencyRequestForm = () => {
               </Button>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="patientName">Patient Name</Label>
+              <Input
+                id="patientName"
+                placeholder="Name of the patient"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                className="glass-input"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="patientAge">Patient Age</Label>
+              <Input
+                id="patientAge"
+                placeholder="Age"
+                value={patientAge}
+                onChange={(e) => setPatientAge(e.target.value)}
+                className="glass-input"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="patientGender">Patient Gender</Label>
+              <Select
+                value={patientGender}
+                onValueChange={setPatientGender}
+              >
+                <SelectTrigger id="patientGender" className="glass-input">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="emergencyType">Emergency Type</Label>
+              <Select
+                value={emergencyType}
+                onValueChange={setEmergencyType}
+              >
+                <SelectTrigger id="emergencyType" className="glass-input">
+                  <SelectValue placeholder="Select emergency type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="accident">Accident</SelectItem>
+                  <SelectItem value="medical">Medical Emergency</SelectItem>
+                  <SelectItem value="injury">Injury</SelectItem>
+                  <SelectItem value="unconscious">Unconscious Person</SelectItem>
+                  <SelectItem value="breathing">Breathing Difficulty</SelectItem>
+                  <SelectItem value="childbirth">Childbirth</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="description">Emergency Description</Label>
@@ -163,7 +230,19 @@ const EmergencyRequestForm = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
-              rows={5}
+              rows={3}
+              className="glass-input resize-none"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="additionalInfo">Additional Information</Label>
+            <Textarea
+              id="additionalInfo"
+              placeholder="Any other important details that might help responders (allergies, medical history, etc.)"
+              value={additionalInfo}
+              onChange={(e) => setAdditionalInfo(e.target.value)}
+              rows={2}
               className="glass-input resize-none"
             />
           </div>

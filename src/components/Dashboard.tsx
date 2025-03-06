@@ -4,14 +4,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EmergencyRequest, mockRequests, mockDrivers, assignDriver, updateRequestStatus } from '@/utils/mockData';
+import { 
+  EmergencyRequest, 
+  mockRequests, 
+  mockDrivers, 
+  assignDriver, 
+  updateRequestStatus 
+} from '@/utils/mockData';
 import RequestCard from './RequestCard';
 import Map from './Map';
-import { AlertTriangle, Ambulance, Clock, CheckCircle, User } from 'lucide-react';
+import DriverProfile from './DriverProfile';
+import MessageCenter from './MessageCenter';
+import { 
+  AlertTriangle, 
+  Ambulance, 
+  Clock, 
+  CheckCircle, 
+  User, 
+  History,
+  MessageSquare,
+  X
+} from 'lucide-react';
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DashboardProps {
   userRole: 'admin' | 'driver' | 'requester';
@@ -20,35 +51,57 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
   const [activeTab, setActiveTab] = useState('all');
+  const [historyTab, setHistoryTab] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   
   // Filter requests based on user role
   const getFilteredRequests = () => {
-    if (userRole === 'admin') {
-      switch (activeTab) {
-        case 'pending':
-          return mockRequests.filter(req => req.status === 'pending');
-        case 'assigned':
-          return mockRequests.filter(req => req.status === 'assigned');
-        case 'in-progress':
-          return mockRequests.filter(req => req.status === 'in-progress');
-        case 'completed':
-          return mockRequests.filter(req => req.status === 'completed');
-        default:
-          return mockRequests;
+    if (historyTab) {
+      // Show completed requests
+      if (userRole === 'admin') {
+        return mockRequests.filter(req => req.status === 'completed');
+      } else if (userRole === 'driver') {
+        return mockRequests.filter(req => req.status === 'completed' && req.assignedTo === userId);
+      } else {
+        return mockRequests.filter(req => req.status === 'completed' && req.userId === userId);
       }
-    } else if (userRole === 'driver') {
-      // For drivers, show only their assigned requests
-      return mockRequests.filter(req => req.assignedTo === userId);
     } else {
-      // For requesters, show only their own requests
-      return mockRequests.filter(req => req.userId === userId);
+      // Show active requests
+      if (userRole === 'admin') {
+        switch (activeTab) {
+          case 'pending':
+            return mockRequests.filter(req => req.status === 'pending');
+          case 'assigned':
+            return mockRequests.filter(req => req.status === 'assigned');
+          case 'in-progress':
+            return mockRequests.filter(req => req.status === 'in-progress');
+          case 'all':
+          default:
+            return mockRequests.filter(req => req.status !== 'completed');
+        }
+      } else if (userRole === 'driver') {
+        // For drivers, show only their assigned requests
+        return mockRequests.filter(req => 
+          req.assignedTo === userId && 
+          req.status !== 'completed'
+        );
+      } else {
+        // For requesters, show only their own active requests
+        return mockRequests.filter(req => 
+          req.userId === userId && 
+          req.status !== 'completed'
+        );
+      }
     }
   };
   
   const filteredRequests = getFilteredRequests();
+  const selectedRequest = selectedRequestId 
+    ? mockRequests.find(req => req.id === selectedRequestId) 
+    : null;
   
   // Get available drivers (for admin)
   const availableDrivers = mockDrivers.filter(driver => driver.status === 'available');
@@ -68,6 +121,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
     } else {
       toast.error('Please select a driver');
     }
+  };
+  
+  // Handle messaging
+  const handleOpenMessageDialog = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setMessageDialogOpen(true);
   };
   
   // Handle driver actions
@@ -124,6 +183,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Driver Profile for driver dashboard */}
+      {userRole === 'driver' && (
+        <DriverProfile />
+      )}
+      
       {/* Stats */}
       {userRole === 'admin' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -205,62 +269,149 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </CardContent>
       </Card>
       
+      {/* Admin driver management */}
+      {userRole === 'admin' && (
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle>Driver Management</CardTitle>
+            <CardDescription>
+              Monitor and manage ambulance drivers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mockDrivers.map(driver => (
+                <Card key={driver.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={driver.photoUrl} alt={driver.name} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {driver.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">{driver.name}</h3>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            driver.status === 'available' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : driver.status === 'busy'
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                          }`}>
+                            {driver.status.charAt(0).toUpperCase() + driver.status.slice(1)}
+                          </span>
+                        </div>
+                        
+                        <div className="text-sm">
+                          <div className="flex items-center text-xs mt-1">
+                            <Ambulance className="w-3 h-3 mr-1 text-muted-foreground" />
+                            <span className="text-muted-foreground">{driver.ambulanceId}</span>
+                          </div>
+                          
+                          <div className="flex items-center text-xs mt-1">
+                            <MapPin className="w-3 h-3 mr-1 text-muted-foreground" />
+                            <span className="text-muted-foreground">{driver.location?.address || 'Unknown'}</span>
+                          </div>
+                          
+                          {driver.currentAssignment && (
+                            <div className="flex items-center text-xs mt-1">
+                              <AlertTriangle className="w-3 h-3 mr-1 text-warning" />
+                              <span>On emergency response</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center text-xs mt-1">
+                            <CheckCircle className="w-3 h-3 mr-1 text-success" />
+                            <span>{driver.completedAssignments} completed</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Emergency requests */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Emergency Requests</CardTitle>
-          <CardDescription>
-            {userRole === 'admin' 
-              ? 'Manage and view all emergency requests' 
-              : userRole === 'driver'
-                ? 'Your assigned emergencies'
-                : 'Your emergency requests'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {userRole === 'admin' && (
-            <Tabs defaultValue="all" className="mb-6" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-5 mb-4">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="pending">
-                  Pending <Badge className="ml-2 bg-warning/20 text-warning-foreground">{stats.pendingCount}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="assigned">Assigned</TabsTrigger>
-                <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-                <TabsTrigger value="completed">Completed</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-2xl font-bold">
+            {historyTab ? 'Request History' : 'Emergency Requests'}
+          </h2>
+          <p className="text-muted-foreground">
+            {historyTab ? 'View past emergency requests' : 'Manage active emergency requests'}
+          </p>
+        </div>
+        
+        <Button
+          variant="outline"
+          onClick={() => setHistoryTab(!historyTab)}
+        >
+          {historyTab ? (
+            <>
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              View Active
+            </>
+          ) : (
+            <>
+              <History className="w-4 h-4 mr-2" />
+              View History
+            </>
           )}
-          
-          {filteredRequests.length === 0 ? (
-            <div className="text-center p-6">
-              <User className="h-12 w-12 mx-auto text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-medium">No requests found</h3>
-              <p className="text-muted-foreground mt-2">
-                {userRole === 'admin' 
+        </Button>
+      </div>
+      
+      {!historyTab && userRole === 'admin' && (
+        <Tabs defaultValue="all" className="mb-6" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="all">All Active</TabsTrigger>
+            <TabsTrigger value="pending">
+              Pending <Badge className="ml-2 bg-warning/20 text-warning-foreground">{stats.pendingCount}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="assigned">Assigned</TabsTrigger>
+            <TabsTrigger value="in-progress">In Progress</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+      
+      {filteredRequests.length === 0 ? (
+        <Card className="glass-card">
+          <CardContent className="text-center p-12">
+            <User className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-medium">No requests found</h3>
+            <p className="text-muted-foreground mt-2">
+              {historyTab
+                ? "No completed requests found in the history."
+                : userRole === 'admin' 
                   ? 'There are no emergency requests in this category.' 
                   : userRole === 'driver'
                     ? 'You have no assigned emergencies at the moment.'
                     : 'You have not made any emergency requests yet.'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredRequests.map(request => (
-                <RequestCard
-                  key={request.id}
-                  request={request}
-                  isAdmin={userRole === 'admin'}
-                  isDriver={userRole === 'driver'}
-                  onAssign={handleOpenAssignDialog}
-                  onStartResponse={handleStartResponse}
-                  onComplete={handleCompleteRequest}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRequests.map(request => (
+            <RequestCard
+              key={request.id}
+              request={request}
+              isAdmin={userRole === 'admin'}
+              isDriver={userRole === 'driver'}
+              onAssign={handleOpenAssignDialog}
+              onStartResponse={handleStartResponse}
+              onComplete={handleCompleteRequest}
+              onViewMessages={handleOpenMessageDialog}
+            />
+          ))}
+        </div>
+      )}
       
       {/* Assign driver dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
@@ -317,6 +468,27 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
               Assign Driver
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Message center dialog */}
+      <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+        <DialogContent className="max-w-2xl h-[80vh]">
+          <div className="absolute right-4 top-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setMessageDialogOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {selectedRequest && (
+            <div className="h-full py-2">
+              <MessageCenter request={selectedRequest} />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
