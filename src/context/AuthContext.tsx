@@ -32,7 +32,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Mock users for demonstration
+// Mock users for demonstration - these will persist throughout the application lifecycle
 const mockUsers: User[] = [
   {
     id: '1',
@@ -95,6 +95,38 @@ for (let i = 3; i <= 20; i++) {
   mockPasswords[`driver${i}@swiftaid.com`] = 'driver123';
 }
 
+// Load registered users from localStorage on app initialization
+const loadRegisteredUsers = (): User[] => {
+  const storedUsers = localStorage.getItem('swiftaid_registered_users');
+  if (storedUsers) {
+    return JSON.parse(storedUsers);
+  }
+  return [];
+};
+
+// Initialize registered users with the mock users and any previously registered users
+const initialRegisteredUsers = (): User[] => {
+  const storedUsers = loadRegisteredUsers();
+  const existingEmails = new Set(storedUsers.map((user: User) => user.email));
+  
+  // Add mock users only if they don't already exist in stored users
+  const combinedUsers = [...storedUsers];
+  
+  mockUsers.forEach(user => {
+    if (!existingEmails.has(user.email)) {
+      combinedUsers.push(user);
+    }
+  });
+  
+  // Save to localStorage
+  localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
+  
+  return combinedUsers;
+};
+
+// Initialize the registered users array
+let registeredUsers = initialRegisteredUsers();
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -115,10 +147,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Check mock users
-      const user = mockUsers.find(u => u.email === email);
+      // Check registered users
+      const user = registeredUsers.find(u => u.email === email);
       
-      if (user && mockPasswords[email as keyof typeof mockPasswords] === password) {
+      if (user && mockPasswords[email] === password) {
         setCurrentUser(user);
         localStorage.setItem('swiftaid_user', JSON.stringify(user));
         
@@ -150,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Check if email already exists
-      if (mockUsers.some(u => u.email === email)) {
+      if (registeredUsers.some(u => u.email === email)) {
         toast.error('Email already in use');
         setLoading(false);
         return;
@@ -158,15 +190,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Create new user
       const newUser: User = {
-        id: `user_${Date.now()}`,
+        id: `user_${Date.now().toString(36)}`,
         name,
         email,
         role: 'requester',
         phone
       };
       
-      // In a real app, we would save to database here
-      mockUsers.push(newUser);
+      // Add to registered users
+      registeredUsers.push(newUser);
+      
+      // Update localStorage with new registered users
+      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
+      
       // Also add to mock passwords
       Object.assign(mockPasswords, { [email]: password });
       
@@ -199,10 +235,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(updatedUser);
     localStorage.setItem('swiftaid_user', JSON.stringify(updatedUser));
 
-    // Also update in mock data
-    const userIndex = mockUsers.findIndex(u => u.id === currentUser.id);
+    // Update user in registered users
+    const userIndex = registeredUsers.findIndex(u => u.id === currentUser.id);
     if (userIndex !== -1) {
-      mockUsers[userIndex] = updatedUser;
+      registeredUsers[userIndex] = updatedUser;
+      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
     }
 
     toast.success(`Status updated to ${status}`);
