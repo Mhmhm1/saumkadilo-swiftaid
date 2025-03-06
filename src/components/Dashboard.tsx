@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,8 @@ import {
   User, 
   History,
   MessageSquare,
-  X
+  X,
+  MapPin
 } from 'lucide-react';
 import { toast } from "sonner";
 import { 
@@ -57,10 +57,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   
-  // Filter requests based on user role
   const getFilteredRequests = () => {
     if (historyTab) {
-      // Show completed requests
       if (userRole === 'admin') {
         return mockRequests.filter(req => req.status === 'completed');
       } else if (userRole === 'driver') {
@@ -69,7 +67,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         return mockRequests.filter(req => req.status === 'completed' && req.userId === userId);
       }
     } else {
-      // Show active requests
       if (userRole === 'admin') {
         switch (activeTab) {
           case 'pending':
@@ -83,13 +80,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
             return mockRequests.filter(req => req.status !== 'completed');
         }
       } else if (userRole === 'driver') {
-        // For drivers, show only their assigned requests
         return mockRequests.filter(req => 
           req.assignedTo === userId && 
           req.status !== 'completed'
         );
       } else {
-        // For requesters, show only their own active requests
         return mockRequests.filter(req => 
           req.userId === userId && 
           req.status !== 'completed'
@@ -103,10 +98,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
     ? mockRequests.find(req => req.id === selectedRequestId) 
     : null;
   
-  // Get available drivers (for admin)
   const availableDrivers = mockDrivers.filter(driver => driver.status === 'available');
   
-  // Handle assigning driver to request
   const handleOpenAssignDialog = (requestId: string) => {
     setSelectedRequestId(requestId);
     setSelectedDriverId(availableDrivers.length > 0 ? availableDrivers[0].id : null);
@@ -123,13 +116,11 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
     }
   };
   
-  // Handle messaging
   const handleOpenMessageDialog = (requestId: string) => {
     setSelectedRequestId(requestId);
     setMessageDialogOpen(true);
   };
   
-  // Handle driver actions
   const handleStartResponse = (requestId: string) => {
     updateRequestStatus(requestId, 'in-progress', 'Driver has arrived at the location');
     toast.success('Response started. Status updated to In Progress');
@@ -140,7 +131,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
     toast.success('Request marked as completed');
   };
   
-  // Get stats for dashboard
   const getStats = () => {
     const pendingCount = mockRequests.filter(req => req.status === 'pending').length;
     const assignedCount = mockRequests.filter(req => req.status === 'assigned').length;
@@ -152,11 +142,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
   
   const stats = getStats();
   
-  // Create map markers from requests and drivers
   const getMapMarkers = () => {
     const markers = [];
     
-    // Add markers for emergency requests
     for (const request of filteredRequests) {
       if (request.location?.coordinates) {
         markers.push({
@@ -167,7 +155,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
       }
     }
     
-    // Add markers for drivers
     for (const driver of mockDrivers) {
       if (driver.location?.coordinates) {
         markers.push({
@@ -183,12 +170,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* Driver Profile for driver dashboard */}
       {userRole === 'driver' && (
         <DriverProfile />
       )}
       
-      {/* Stats */}
       {userRole === 'admin' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="glass-card">
@@ -249,7 +234,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </div>
       )}
       
-      {/* Map */}
       <Card className="glass-card">
         <CardHeader>
           <CardTitle>Location Tracking</CardTitle>
@@ -269,7 +253,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </CardContent>
       </Card>
       
-      {/* Admin driver management */}
       {userRole === 'admin' && (
         <Card className="glass-card">
           <CardHeader>
@@ -338,7 +321,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </Card>
       )}
       
-      {/* Emergency requests */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold">
@@ -413,7 +395,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </div>
       )}
       
-      {/* Assign driver dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -471,7 +452,6 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </DialogContent>
       </Dialog>
       
-      {/* Message center dialog */}
       <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
         <DialogContent className="max-w-2xl h-[80vh]">
           <div className="absolute right-4 top-4">
