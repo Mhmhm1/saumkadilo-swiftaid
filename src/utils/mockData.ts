@@ -166,7 +166,7 @@ export const firstAidTips = [
       'Make the mother comfortable and ensure privacy',
       'Time contractions and look for signs of imminent delivery',
       'If delivery is progressing, have mother lie down with knees bent',
-      'Support the baby's head as it emerges, never pull'
+      'Support the baby\'s head as it emerges, never pull'
     ]
   }
 ];
