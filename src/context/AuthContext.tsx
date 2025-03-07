@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -378,23 +377,23 @@ const initialRegisteredUsers = (): User[] => {
   
   // Check if we already initialized the real profiles
   const hasInitialized = localStorage.getItem('swiftaid_profiles_initialized');
-  if (hasInitialized === 'true') {
-    return storedUsers;
-  }
   
-  // First time initialization
+  // Clear initialization flag to ensure profiles are always properly loaded
+  localStorage.removeItem('swiftaid_profiles_initialized');
+  
+  // First time initialization or refresh of profiles
   const existingUsernames = new Set(storedUsers.map((user: User) => user.username));
   const existingEmails = new Set(storedUsers.map((user: User) => user.email));
   
-  // Add real profiles only if they don't already exist in stored users
-  const combinedUsers = [...storedUsers];
+  // Remove existing real profiles to avoid duplicates with different data
+  const filteredUsers = storedUsers.filter((user: User) => 
+    !realDriverProfiles.some(profile => 
+      profile.username === user.username || profile.email === user.email
+    )
+  );
   
-  realDriverProfiles.forEach(user => {
-    if ((!user.username || !existingUsernames.has(user.username)) && 
-        (!user.email || !existingEmails.has(user.email))) {
-      combinedUsers.push(user);
-    }
-  });
+  // Add real profiles
+  const combinedUsers = [...filteredUsers, ...realDriverProfiles];
   
   // Save to localStorage
   localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
@@ -429,10 +428,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Reload the latest registered users
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
       
+      console.log("Trying to login with:", usernameOrEmail);
+      console.log("Available users:", registeredUsers.map(u => u.username || u.email));
+      
       // Check if login is with username or email
       const user = registeredUsers.find(u => 
         (u.username === usernameOrEmail) || (u.email === usernameOrEmail)
       );
+      
+      console.log("Found user:", user);
+      console.log("Password check:", user && (mockPasswords[user.username || ''] === password || mockPasswords[user.email || ''] === password));
       
       if (user && (mockPasswords[user.username || ''] === password || mockPasswords[user.email || ''] === password)) {
         setCurrentUser(user);
