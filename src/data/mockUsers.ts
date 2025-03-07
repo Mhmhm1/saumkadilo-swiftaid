@@ -13,7 +13,7 @@ export const realDriverProfiles: User[] = [
   },
   {
     id: '2',
-    name: 'John Smith',
+    name: 'Juhn Smith',
     email: 'john.smith@swiftaid.com',
     username: 'john.smith',
     role: 'driver',
