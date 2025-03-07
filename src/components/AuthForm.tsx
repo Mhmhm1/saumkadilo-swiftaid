@@ -154,7 +154,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       {mode === 'login' && (
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground mb-2">Demo Accounts</p>
-          <div className="flex flex-wrap gap-2 justify-center">
+          <div className="grid grid-cols-2 gap-2 mb-2">
             <Button
               variant="outline"
               size="sm"
@@ -181,7 +181,37 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 email === 'john.smith' && "border-primary text-primary"
               )}
             >
-              Driver
+              John (Driver)
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEmail('sarah.johnson');
+                setPassword('SarahJohnson123');
+              }}
+              className={cn(
+                "text-xs",
+                email === 'sarah.johnson' && "border-primary text-primary"
+              )}
+            >
+              Sarah (Driver)
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEmail('michael.brown');
+                setPassword('MichaelBrown123');
+              }}
+              className={cn(
+                "text-xs",
+                email === 'michael.brown' && "border-primary text-primary"
+              )}
+            >
+              Michael (Driver)
             </Button>
           </div>
         </div>
