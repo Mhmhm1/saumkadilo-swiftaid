@@ -66,11 +66,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{mode === 'login' ? 'Username or Email' : 'Email'}</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="you@example.com"
+                type={mode === 'login' ? 'text' : 'email'}
+                placeholder={mode === 'login' ? 'username or email' : 'you@example.com'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -154,17 +154,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
       {mode === 'login' && (
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground mb-2">Demo Accounts</p>
-          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setEmail('admin@swiftaid.com');
+                setEmail('admin');
                 setPassword('admin123');
               }}
               className={cn(
                 "text-xs",
-                email === 'admin@swiftaid.com' && "border-primary text-primary"
+                email === 'admin' && "border-primary text-primary"
               )}
             >
               Admin
@@ -173,12 +173,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               variant="outline"
               size="sm"
               onClick={() => {
-                setEmail('driver1@swiftaid.com');
-                setPassword('driver123');
+                setEmail('john.smith');
+                setPassword('JohnSmith123');
               }}
               className={cn(
                 "text-xs",
-                email === 'driver1@swiftaid.com' && "border-primary text-primary"
+                email === 'john.smith' && "border-primary text-primary"
               )}
             >
               Driver

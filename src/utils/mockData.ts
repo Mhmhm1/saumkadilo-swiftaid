@@ -61,11 +61,11 @@ export interface Driver {
 // Sample emergency requests - start with an empty array
 export const mockRequests: EmergencyRequest[] = [];
 
-// Sample drivers - populate from the User data in AuthContext
+// Sample drivers - synchronize with the User data in AuthContext
 export const mockDrivers: Driver[] = [
   {
     id: '2', // Matches User ID for the driver
-    name: 'Driver One',
+    name: 'John Smith',
     status: 'available',
     location: {
       coordinates: {
@@ -78,11 +78,12 @@ export const mockDrivers: Driver[] = [
     driverId: 'DRV001',
     ambulanceId: 'AMB001',
     licenseNumber: 'LIC001',
-    phone: '123-456-7891'
+    phone: '123-456-7891',
+    photoUrl: 'https://randomuser.me/api/portraits/men/1.jpg'
   },
   {
     id: '3', // Matches User ID for the driver
-    name: 'Driver Two',
+    name: 'Sarah Johnson',
     status: 'available',
     location: {
       coordinates: {
@@ -95,15 +96,38 @@ export const mockDrivers: Driver[] = [
     driverId: 'DRV002',
     ambulanceId: 'AMB002',
     licenseNumber: 'LIC002',
-    phone: '123-456-7892'
+    phone: '123-456-7892',
+    photoUrl: 'https://randomuser.me/api/portraits/women/1.jpg'
   }
 ];
 
-// Add additional 18 drivers to have a total of 20 (matching the auth context)
-for (let i = 3; i <= 20; i++) {
+// Add additional 18 drivers with real names to have a total of 20 (matching the auth context)
+const additionalDrivers = [
+  { id: '4', name: 'Michael Brown', photoUrl: 'https://randomuser.me/api/portraits/men/2.jpg' },
+  { id: '5', name: 'Emily Davis', photoUrl: 'https://randomuser.me/api/portraits/women/2.jpg' },
+  { id: '6', name: 'David Wilson', photoUrl: 'https://randomuser.me/api/portraits/men/3.jpg' },
+  { id: '7', name: 'Lisa Anderson', photoUrl: 'https://randomuser.me/api/portraits/women/3.jpg' },
+  { id: '8', name: 'James Taylor', photoUrl: 'https://randomuser.me/api/portraits/men/4.jpg' },
+  { id: '9', name: 'Jennifer Martin', photoUrl: 'https://randomuser.me/api/portraits/women/4.jpg' },
+  { id: '10', name: 'Robert Thompson', photoUrl: 'https://randomuser.me/api/portraits/men/5.jpg' },
+  { id: '11', name: 'Jessica White', photoUrl: 'https://randomuser.me/api/portraits/women/5.jpg' },
+  { id: '12', name: 'William Clark', photoUrl: 'https://randomuser.me/api/portraits/men/6.jpg' },
+  { id: '13', name: 'Elizabeth Lee', photoUrl: 'https://randomuser.me/api/portraits/women/6.jpg' },
+  { id: '14', name: 'Christopher King', photoUrl: 'https://randomuser.me/api/portraits/men/7.jpg' },
+  { id: '15', name: 'Margaret Wright', photoUrl: 'https://randomuser.me/api/portraits/women/7.jpg' },
+  { id: '16', name: 'Daniel Green', photoUrl: 'https://randomuser.me/api/portraits/men/8.jpg' },
+  { id: '17', name: 'Patricia Hall', photoUrl: 'https://randomuser.me/api/portraits/women/8.jpg' },
+  { id: '18', name: 'Joseph Adams', photoUrl: 'https://randomuser.me/api/portraits/men/9.jpg' },
+  { id: '19', name: 'Michelle Baker', photoUrl: 'https://randomuser.me/api/portraits/women/9.jpg' },
+  { id: '20', name: 'Kevin Nelson', photoUrl: 'https://randomuser.me/api/portraits/men/10.jpg' },
+  { id: '21', name: 'Laura Carter', photoUrl: 'https://randomuser.me/api/portraits/women/10.jpg' }
+];
+
+for (let i = 0; i < additionalDrivers.length; i++) {
+  const driver = additionalDrivers[i];
   mockDrivers.push({
-    id: `${i+1}`,
-    name: `Driver ${i}`,
+    id: driver.id,
+    name: driver.name,
     status: i % 3 === 0 ? 'busy' : (i % 4 === 0 ? 'offline' : 'available'),
     location: {
       coordinates: {
@@ -114,10 +138,11 @@ for (let i = 3; i <= 20; i++) {
     },
     currentAssignment: i % 3 === 0 ? `req_dummy_${i}` : undefined,
     completedAssignments: Math.floor(Math.random() * 50),
-    driverId: `DRV0${i < 10 ? '0' + i : i}`,
-    ambulanceId: `AMB0${i < 10 ? '0' + i : i}`,
-    licenseNumber: `LIC0${i < 10 ? '0' + i : i}`,
-    phone: `123-456-${7890 + i}`
+    driverId: `DRV0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
+    ambulanceId: `AMB0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
+    licenseNumber: `LIC0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
+    phone: `123-456-${7893 + i}`,
+    photoUrl: driver.photoUrl
   });
 }
 

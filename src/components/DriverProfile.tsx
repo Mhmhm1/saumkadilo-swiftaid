@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,19 +7,52 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/AuthContext';
-import { User, MapPin, Truck, BadgeCheck, UserRound } from 'lucide-react';
+import { User, MapPin, Truck, BadgeCheck, UserRound, Camera } from 'lucide-react';
+import { toast } from 'sonner';
 
 const DriverProfile = () => {
-  const { currentUser, updateDriverStatus } = useAuth();
+  const { currentUser, updateDriverStatus, updateUserProfile } = useAuth();
   
   const [status, setStatus] = useState<'available' | 'busy' | 'offline'>(currentUser?.status || 'available');
   const [location, setLocation] = useState(currentUser?.currentLocation || '');
   const [currentJob, setCurrentJob] = useState(currentUser?.currentJob || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   if (!currentUser) return null;
 
   const handleStatusUpdate = () => {
     updateDriverStatus(status, location, status === 'busy' ? currentJob : undefined);
+  };
+
+  const handleProfilePictureClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size should be less than 5MB');
+      return;
+    }
+    
+    // Create a URL for the image
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const photoUrl = e.target?.result as string;
+      updateUserProfile({ photoUrl });
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -33,20 +66,22 @@ const DriverProfile = () => {
       <CardContent className="space-y-6">
         <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
           <div className="relative">
-            <Avatar className="h-24 w-24">
+            <Avatar className="h-24 w-24 cursor-pointer" onClick={handleProfilePictureClick}>
               <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
               <AvatarFallback className="text-2xl bg-primary/10">
                 <UserRound className="h-10 w-10 text-primary" />
               </AvatarFallback>
+              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <Camera className="h-8 w-8 text-white" />
+              </div>
             </Avatar>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="absolute -bottom-2 -right-2"
-              onClick={() => alert('Photo upload functionality will be implemented soon.')}
-            >
-              Edit
-            </Button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              accept="image/*" 
+              className="hidden" 
+              onChange={handleFileChange}
+            />
           </div>
           
           <div className="flex-1 space-y-2">
