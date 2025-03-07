@@ -65,7 +65,7 @@ export const mockRequests: EmergencyRequest[] = [];
 export const mockDrivers: Driver[] = [
   {
     id: '2', // Matches User ID for the driver
-    name: 'John Smith',
+    name: 'Juhn Smith',
     status: 'available',
     location: {
       coordinates: {
