@@ -15,11 +15,16 @@ export const loadRegisteredUsers = (): User[] => {
 export const initialRegisteredUsers = (): User[] => {
   const storedUsers = loadRegisteredUsers();
   
-  // Check if we already initialized the real profiles
-  const hasInitialized = localStorage.getItem('swiftaid_profiles_initialized');
-  
-  // Clear initialization flag to ensure profiles are always properly loaded
-  localStorage.removeItem('swiftaid_profiles_initialized');
+  // Avoid re-initializing if we already have users
+  if (storedUsers.length > 0) {
+    // Just check if we have all the default drivers and admin
+    const hasAdmin = storedUsers.some((user: User) => user.username === 'admin');
+    const hasDriver = storedUsers.some((user: User) => user.username === 'john.smith');
+    
+    if (hasAdmin && hasDriver) {
+      return storedUsers;
+    }
+  }
   
   // First time initialization or refresh of profiles
   const existingUsernames = new Set(storedUsers.map((user: User) => user.username));
@@ -37,7 +42,12 @@ export const initialRegisteredUsers = (): User[] => {
   
   // Save to localStorage
   localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
-  localStorage.setItem('swiftaid_profiles_initialized', 'true');
+  
+  // Initialize passwords in localStorage if not already done
+  const storedPasswords = localStorage.getItem('swiftaid_passwords');
+  if (!storedPasswords) {
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(mockPasswords));
+  }
   
   return combinedUsers;
 };
@@ -48,7 +58,16 @@ export const validateCredentials = (usernameOrEmail: string, password: string, u
     (u.username === usernameOrEmail) || (u.email === usernameOrEmail)
   );
   
-  if (user && (mockPasswords[user.username || ''] === password || mockPasswords[user.email || ''] === password)) {
+  if (!user) return null;
+  
+  // First check in-memory passwords
+  if (mockPasswords[user.username || ''] === password || mockPasswords[user.email || ''] === password) {
+    return user;
+  }
+  
+  // Then check localStorage passwords for persistence
+  const storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
+  if (storedPasswords[user.username || ''] === password || storedPasswords[user.email || ''] === password) {
     return user;
   }
   

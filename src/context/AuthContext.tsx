@@ -1,9 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, AuthContextType } from '../types/auth';
 import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
+import { syncDriverWithUser } from '../utils/mockData';
 
 // Initialize the registered users array
 let registeredUsers = initialRegisteredUsers();
@@ -19,7 +19,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check if user is already logged in (from localStorage)
     const storedUser = localStorage.getItem('swiftaid_user');
     if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Re-validate user data from the latest registered users
+        const latestRegisteredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+        const updatedUser = latestRegisteredUsers.find((u: User) => u.id === parsedUser.id);
+        
+        // Use the latest user data if available, otherwise use the stored user
+        setCurrentUser(updatedUser || parsedUser);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('swiftaid_user');
+      }
     }
     setLoading(false);
   }, []);
@@ -108,6 +120,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mockPasswords[email] = password;
       mockPasswords[username] = password;
       
+      // Create a persistent passwords object in localStorage
+      let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
+      storedPasswords[email] = password;
+      storedPasswords[username] = password;
+      localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+      
       // Auto login after registration
       setCurrentUser(newUser);
       localStorage.setItem('swiftaid_user', JSON.stringify(newUser));
@@ -151,6 +169,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setCurrentUser(updatedUser);
     updateUserInStorage(updatedUser);
+    
+    // If this is a driver, also update the driver data in mockDrivers
+    if (currentUser.role === 'driver') {
+      syncDriverWithUser(currentUser.id, updates);
+    }
+    
     toast.success('Profile updated successfully');
   };
 

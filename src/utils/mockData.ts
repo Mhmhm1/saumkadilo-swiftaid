@@ -1,5 +1,4 @@
-
-import { User } from '../context/AuthContext';
+import { User } from '../types/auth';
 
 export interface EmergencyRequest {
   id: string;
@@ -58,13 +57,11 @@ export interface Driver {
   phone?: string;
 }
 
-// Sample emergency requests - start with an empty array
 export const mockRequests: EmergencyRequest[] = [];
 
-// Sample drivers - synchronize with the User data in AuthContext
 export const mockDrivers: Driver[] = [
   {
-    id: '2', // Matches User ID for the driver
+    id: '2',
     name: 'Juhn Smith',
     status: 'available',
     location: {
@@ -82,7 +79,7 @@ export const mockDrivers: Driver[] = [
     photoUrl: 'https://randomuser.me/api/portraits/men/1.jpg'
   },
   {
-    id: '3', // Matches User ID for the driver
+    id: '3',
     name: 'Sarah Johnson',
     status: 'available',
     location: {
@@ -101,7 +98,6 @@ export const mockDrivers: Driver[] = [
   }
 ];
 
-// Add additional 18 drivers with real names to have a total of 20 (matching the auth context)
 const additionalDrivers = [
   { id: '4', name: 'Michael Brown', photoUrl: 'https://randomuser.me/api/portraits/men/2.jpg' },
   { id: '5', name: 'Emily Davis', photoUrl: 'https://randomuser.me/api/portraits/women/2.jpg' },
@@ -146,7 +142,6 @@ for (let i = 0; i < additionalDrivers.length; i++) {
   });
 }
 
-// First aid tips for requesters
 export const firstAidTips = [
   {
     type: 'general',
@@ -196,7 +191,6 @@ export const firstAidTips = [
   }
 ];
 
-// AI severity analysis data (for demo)
 export const severityAnalysis = {
   factors: [
     { name: 'Age Group', value: 'Elderly', impact: 'high' },
@@ -212,7 +206,6 @@ export const severityAnalysis = {
   ]
 };
 
-// Mock function to add a new emergency request
 export const addEmergencyRequest = (
   userId: string, 
   userName: string, 
@@ -225,7 +218,6 @@ export const addEmergencyRequest = (
   additionalInfo?: string,
   userPhone?: string
 ): EmergencyRequest => {
-  // Analyze severity based on keywords in description (simplified AI simulation)
   let severity: 'critical' | 'high' | 'medium' | 'low' = 'medium';
   
   const criticalKeywords = ['unconscious', 'not breathing', 'severe bleeding', 'heart attack', 'stroke', 'drowning'];
@@ -260,13 +252,11 @@ export const addEmergencyRequest = (
     messages: []
   };
   
-  // Add to mock data
   mockRequests.unshift(newRequest);
   
   return newRequest;
 };
 
-// Mock function to assign a driver
 export const assignDriver = (requestId: string, driverId: string): void => {
   const request = mockRequests.find(req => req.id === requestId);
   const driver = mockDrivers.find(d => d.id === driverId);
@@ -279,20 +269,16 @@ export const assignDriver = (requestId: string, driverId: string): void => {
     request.driverPhoto = driver.photoUrl;
     request.ambulanceId = driver.ambulanceId;
     
-    // Calculate estimated arrival (for demo purposes: 5-15 minutes from now)
     const randomMinutes = Math.floor(Math.random() * 10) + 5;
     request.estimatedArrival = new Date(Date.now() + 1000 * 60 * randomMinutes);
     
-    // Update driver status
     driver.status = 'busy';
     driver.currentAssignment = requestId;
     
-    // Initialize messages array if it doesn't exist
     if (!request.messages) {
       request.messages = [];
     }
     
-    // Add system message about assignment
     request.messages.push({
       id: `msg_${Date.now().toString(36)}`,
       sender: 'system',
@@ -302,7 +288,6 @@ export const assignDriver = (requestId: string, driverId: string): void => {
   }
 };
 
-// Mock function to add a message to a request
 export const addMessageToRequest = (
   requestId: string,
   sender: string,
@@ -324,7 +309,6 @@ export const addMessageToRequest = (
   }
 };
 
-// Mock function to update request status
 export const updateRequestStatus = (
   requestId: string, 
   status: 'pending' | 'assigned' | 'in-progress' | 'completed' | 'cancelled',
@@ -336,10 +320,8 @@ export const updateRequestStatus = (
     request.status = status;
     
     if (status === 'in-progress') {
-      // Ambulance has arrived
       request.estimatedArrival = new Date();
       
-      // Add system message
       if (!request.messages) {
         request.messages = [];
       }
@@ -355,7 +337,6 @@ export const updateRequestStatus = (
     if (status === 'completed') {
       request.completedAt = new Date();
       
-      // Add system message
       if (!request.messages) {
         request.messages = [];
       }
@@ -367,7 +348,6 @@ export const updateRequestStatus = (
         timestamp: new Date()
       });
       
-      // Free up the driver
       if (request.assignedTo) {
         const driver = mockDrivers.find(d => d.id === request.assignedTo);
         if (driver) {
@@ -387,10 +367,29 @@ export const updateRequestStatus = (
   }
 };
 
-// Get first aid tips based on emergency type
 export const getFirstAidTips = (emergencyType?: string) => {
   if (!emergencyType) return firstAidTips.find(t => t.type === 'general')?.tips || [];
   
   const specificTips = firstAidTips.find(t => t.type === emergencyType.toLowerCase())?.tips;
   return specificTips || firstAidTips.find(t => t.type === 'general')?.tips || [];
+};
+
+export const syncDriverWithUser = (driverId: string, updates: Partial<User>): void => {
+  const driver = mockDrivers.find(d => d.id === driverId);
+  
+  if (driver && updates.photoUrl) {
+    driver.photoUrl = updates.photoUrl;
+    
+    const registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+    
+    const userIndex = registeredUsers.findIndex((u: User) => u.id === driverId);
+    if (userIndex !== -1) {
+      registeredUsers[userIndex] = {
+        ...registeredUsers[userIndex],
+        photoUrl: updates.photoUrl
+      };
+      
+      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
+    }
+  }
 };
