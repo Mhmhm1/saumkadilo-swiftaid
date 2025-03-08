@@ -35,6 +35,11 @@ export interface EmergencyRequest {
     text: string;
     timestamp: Date;
   }[];
+  rating?: {
+    rating: number;
+    feedback: string;
+    timestamp: Date;
+  };
 }
 
 export interface Driver {
@@ -392,4 +397,35 @@ export const syncDriverWithUser = (driverId: string, updates: Partial<User>): vo
       localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
     }
   }
+};
+
+export const addRatingToRequest = (
+  requestId: string,
+  rating: number,
+  feedback: string
+): void => {
+  const request = mockRequests.find(req => req.id === requestId);
+  
+  if (request) {
+    request.rating = {
+      rating,
+      feedback,
+      timestamp: new Date()
+    };
+  }
+};
+
+export const getAllRatings = () => {
+  return mockRequests
+    .filter(req => req.rating && req.status === 'completed')
+    .map(req => ({
+      requestId: req.id,
+      rating: req.rating!.rating,
+      feedback: req.rating!.feedback,
+      timestamp: req.rating!.timestamp,
+      userName: req.userName,
+      userPhoto: undefined,
+      emergencyType: req.emergencyType
+    }))
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 };

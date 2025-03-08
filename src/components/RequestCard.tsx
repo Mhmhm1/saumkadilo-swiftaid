@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, User, Phone, AlertTriangle, CheckCircle, Ambulance, MessageSquare, Star } from 'lucide-react';
-import { EmergencyRequest } from '@/utils/mockData';
+import { EmergencyRequest, addRatingToRequest } from '@/utils/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -80,18 +81,22 @@ const RequestCard: React.FC<RequestCardProps> = ({
 
   // Count unread messages (for demo purposes, just show if there are messages)
   const hasMessages = request.messages && request.messages.length > 0;
+  
+  // Check if this request has already been rated
+  const hasRating = request.rating !== undefined;
 
   const handleCompleteRequest = () => {
     if (isDriver && onComplete) {
       onComplete(request.id);
-    } else if (!isAdmin && !isDriver && request.status === 'completed') {
+    } else if (!isAdmin && !isDriver && request.status === 'completed' && !hasRating) {
       // Show rating dialog for requester after completion
       setShowRatingDialog(true);
     }
   };
 
   const handleSubmitRating = () => {
-    // Here we would normally save the rating to a database
+    // Save the rating to our data store
+    addRatingToRequest(request.id, rating, feedback);
     setShowRatingDialog(false);
     
     if (rating > 3) {
@@ -127,6 +132,13 @@ const RequestCard: React.FC<RequestCardProps> = ({
                 <Badge variant="outline" className="ml-2 bg-primary/20 text-primary border-primary/50">
                   <MessageSquare className="w-3 h-3 mr-1" />
                   Messages
+                </Badge>
+              )}
+              
+              {hasRating && (
+                <Badge variant="outline" className="ml-2 bg-yellow-400/20 text-yellow-600 border-yellow-400/50">
+                  <Star className="w-3 h-3 mr-1" />
+                  Rated ({request.rating?.rating}/5)
                 </Badge>
               )}
             </div>
@@ -255,12 +267,13 @@ const RequestCard: React.FC<RequestCardProps> = ({
           
           {(!isAdmin && !isDriver && request.status === 'completed') && (
             <Button 
-              variant="outline"
+              variant={hasRating ? "outline" : "default"}
               className="w-full"
               onClick={handleCompleteRequest}
+              disabled={hasRating}
             >
               <Star className="w-4 h-4 mr-2" />
-              Rate Service
+              {hasRating ? "Already Rated" : "Rate Service"}
             </Button>
           )}
 

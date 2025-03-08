@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,12 +9,14 @@ import {
   mockRequests, 
   mockDrivers, 
   assignDriver, 
-  updateRequestStatus 
+  updateRequestStatus,
+  getAllRatings
 } from '@/utils/mockData';
 import RequestCard from './RequestCard';
 import Map from './Map';
 import DriverProfile from './DriverProfile';
 import MessageCenter from './MessageCenter';
+import ServiceRatings from './ServiceRatings';
 import { 
   AlertTriangle, 
   Ambulance, 
@@ -23,7 +26,8 @@ import {
   History,
   MessageSquare,
   X,
-  MapPin
+  MapPin,
+  Star
 } from 'lucide-react';
 import { toast } from "sonner";
 import { 
@@ -52,6 +56,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [historyTab, setHistoryTab] = useState(false);
+  const [showRatings, setShowRatings] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
@@ -137,7 +142,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
     const inProgressCount = mockRequests.filter(req => req.status === 'in-progress').length;
     const completedCount = mockRequests.filter(req => req.status === 'completed').length;
     
-    return { pendingCount, assignedCount, inProgressCount, completedCount };
+    // Count ratings
+    const ratingCount = mockRequests.filter(req => req.rating !== undefined).length;
+    
+    return { pendingCount, assignedCount, inProgressCount, completedCount, ratingCount };
   };
   
   const stats = getStats();
@@ -175,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
       )}
       
       {userRole === 'admin' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="glass-card">
             <CardContent className="p-6">
               <div className="flex justify-between items-center">
@@ -231,6 +239,20 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="glass-card">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Ratings</p>
+                  <h3 className="text-2xl font-bold">{stats.ratingCount}</h3>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-yellow-400/20 flex items-center justify-center">
+                  <Star className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
       
@@ -253,7 +275,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </CardContent>
       </Card>
       
-      {userRole === 'admin' && (
+      {userRole === 'admin' && !showRatings && (
         <Card className="glass-card">
           <CardHeader>
             <CardTitle>Driver Management</CardTitle>
@@ -321,35 +343,88 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </Card>
       )}
       
+      {userRole === 'admin' && showRatings && (
+        <ServiceRatings ratings={getAllRatings()} />
+      )}
+      
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold">
-            {historyTab ? 'Request History' : 'Emergency Requests'}
+            {historyTab ? 'Request History' : (showRatings ? 'Service Ratings' : 'Emergency Requests')}
           </h2>
           <p className="text-muted-foreground">
-            {historyTab ? 'View past emergency requests' : 'Manage active emergency requests'}
+            {historyTab 
+              ? 'View past emergency requests' 
+              : (showRatings 
+                  ? 'User feedback for completed emergency services' 
+                  : 'Manage active emergency requests')}
           </p>
         </div>
         
-        <Button
-          variant="outline"
-          onClick={() => setHistoryTab(!historyTab)}
-        >
-          {historyTab ? (
-            <>
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              View Active
-            </>
-          ) : (
-            <>
-              <History className="w-4 h-4 mr-2" />
-              View History
-            </>
-          )}
-        </Button>
+        {userRole === 'admin' && (
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setHistoryTab(false);
+                setShowRatings(!showRatings);
+              }}
+            >
+              {showRatings ? (
+                <>
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  View Requests
+                </>
+              ) : (
+                <>
+                  <Star className="w-4 h-4 mr-2" />
+                  View Ratings
+                </>
+              )}
+            </Button>
+            
+            {!showRatings && (
+              <Button
+                variant="outline"
+                onClick={() => setHistoryTab(!historyTab)}
+              >
+                {historyTab ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 mr-2" />
+                    View Active
+                  </>
+                ) : (
+                  <>
+                    <History className="w-4 h-4 mr-2" />
+                    View History
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+        
+        {!userRole === 'admin' && (
+          <Button
+            variant="outline"
+            onClick={() => setHistoryTab(!historyTab)}
+          >
+            {historyTab ? (
+              <>
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                View Active
+              </>
+            ) : (
+              <>
+                <History className="w-4 h-4 mr-2" />
+                View History
+              </>
+            )}
+          </Button>
+        )}
       </div>
       
-      {!historyTab && userRole === 'admin' && (
+      {!showRatings && !historyTab && userRole === 'admin' && (
         <Tabs defaultValue="all" className="mb-6" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-4">
             <TabsTrigger value="all">All Active</TabsTrigger>
@@ -362,37 +437,39 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
         </Tabs>
       )}
       
-      {filteredRequests.length === 0 ? (
-        <Card className="glass-card">
-          <CardContent className="text-center p-12">
-            <User className="h-12 w-12 mx-auto text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium">No requests found</h3>
-            <p className="text-muted-foreground mt-2">
-              {historyTab
-                ? "No completed requests found in the history."
-                : userRole === 'admin' 
-                  ? 'There are no emergency requests in this category.' 
-                  : userRole === 'driver'
-                    ? 'You have no assigned emergencies at the moment.'
-                    : 'You have not made any emergency requests yet.'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRequests.map(request => (
-            <RequestCard
-              key={request.id}
-              request={request}
-              isAdmin={userRole === 'admin'}
-              isDriver={userRole === 'driver'}
-              onAssign={handleOpenAssignDialog}
-              onStartResponse={handleStartResponse}
-              onComplete={handleCompleteRequest}
-              onViewMessages={handleOpenMessageDialog}
-            />
-          ))}
-        </div>
+      {showRatings && userRole === 'admin' ? null : (
+        filteredRequests.length === 0 ? (
+          <Card className="glass-card">
+            <CardContent className="text-center p-12">
+              <User className="h-12 w-12 mx-auto text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-medium">No requests found</h3>
+              <p className="text-muted-foreground mt-2">
+                {historyTab
+                  ? "No completed requests found in the history."
+                  : userRole === 'admin' 
+                    ? 'There are no emergency requests in this category.' 
+                    : userRole === 'driver'
+                      ? 'You have no assigned emergencies at the moment.'
+                      : 'You have not made any emergency requests yet.'}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRequests.map(request => (
+              <RequestCard
+                key={request.id}
+                request={request}
+                isAdmin={userRole === 'admin'}
+                isDriver={userRole === 'driver'}
+                onAssign={handleOpenAssignDialog}
+                onStartResponse={handleStartResponse}
+                onComplete={handleCompleteRequest}
+                onViewMessages={handleOpenMessageDialog}
+              />
+            ))}
+          </div>
+        )
       )}
       
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
