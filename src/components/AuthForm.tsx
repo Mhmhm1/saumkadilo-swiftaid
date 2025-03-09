@@ -56,7 +56,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  placeholder="John Doe"
+                  placeholder="saumu kadilo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -104,7 +104,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="(123) 456-7890"
+                  placeholder="(254)0742650817"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="glass-input"
