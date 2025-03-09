@@ -5,7 +5,7 @@ import { User } from '../types/auth';
 export const realDriverProfiles: User[] = [
   {
     id: '2',
-    name: 'Kivinga Wambua',
+    name: 'KIVINGA WAMBUA',
     email: 'kivinga.wambua@swiftaid.com',
     username: 'kivinga.wambua',
     role: 'driver',
@@ -15,11 +15,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC001',
     status: 'available',
     currentLocation: 'Downtown Medical Center',
-    photoUrl: 'https://randomuser.me/api/portraits/men/35.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/74.jpg'
   },
   {
     id: '3',
-    name: 'Elizabeth Kadzo',
+    name: 'ELIZABETH KADZO',
     email: 'elizabeth.kadzo@swiftaid.com',
     username: 'elizabeth.kadzo',
     role: 'driver',
@@ -29,11 +29,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC002',
     status: 'available',
     currentLocation: 'North District Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/women/35.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/74.jpg'
   },
   {
     id: '4',
-    name: 'Cyrus Wambua',
+    name: 'CYRUS WAMBUA',
     email: 'cyrus.wambua@swiftaid.com',
     username: 'cyrus.wambua',
     role: 'driver',
@@ -44,11 +44,11 @@ export const realDriverProfiles: User[] = [
     status: 'busy',
     currentLocation: 'Central Hospital',
     currentJob: 'Transporting patient to hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/men/36.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/75.jpg'
   },
   {
     id: '5',
-    name: 'Dunson Mwandwa',
+    name: 'DUNSON MWANDWA',
     email: 'dunson.mwandwa@swiftaid.com',
     username: 'dunson.mwandwa',
     role: 'driver',
@@ -58,11 +58,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC004',
     status: 'offline',
     currentLocation: 'Off duty',
-    photoUrl: 'https://randomuser.me/api/portraits/men/37.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/76.jpg'
   },
   {
     id: '6',
-    name: 'Masha Ngovi',
+    name: 'MASHA NGOVI',
     email: 'masha.ngovi@swiftaid.com',
     username: 'masha.ngovi',
     role: 'driver',
@@ -72,11 +72,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC005',
     status: 'available',
     currentLocation: 'East Wing Medical Center',
-    photoUrl: 'https://randomuser.me/api/portraits/women/36.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/75.jpg'
   },
   {
     id: '7',
-    name: 'Godfrey Mambo',
+    name: 'GODFREY MAMBO',
     email: 'godfrey.mambo@swiftaid.com',
     username: 'godfrey.mambo',
     role: 'driver',
@@ -86,11 +86,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC006',
     status: 'available',
     currentLocation: 'South Community Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/men/38.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/77.jpg'
   },
   {
     id: '8',
-    name: 'Firdaus Said',
+    name: 'FIRDAUS SAID',
     email: 'firdaus.said@swiftaid.com',
     username: 'firdaus.said',
     role: 'driver',
@@ -101,11 +101,11 @@ export const realDriverProfiles: User[] = [
     status: 'busy',
     currentLocation: 'Central Hospital',
     currentJob: 'Emergency response to traffic accident',
-    photoUrl: 'https://randomuser.me/api/portraits/women/37.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/76.jpg'
   },
   {
     id: '9',
-    name: 'Saida Seif',
+    name: 'SAIDA SEIF',
     email: 'saida.seif@swiftaid.com',
     username: 'saida.seif',
     role: 'driver',
@@ -115,11 +115,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC008',
     status: 'available',
     currentLocation: 'Riverside Medical Center',
-    photoUrl: 'https://randomuser.me/api/portraits/women/38.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/77.jpg'
   },
   {
     id: '10',
-    name: 'Anna Stephen',
+    name: 'ANNA STEPHEN',
     email: 'anna.stephen@swiftaid.com',
     username: 'anna.stephen',
     role: 'driver',
@@ -129,11 +129,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC009',
     status: 'offline',
     currentLocation: 'Off duty',
-    photoUrl: 'https://randomuser.me/api/portraits/women/39.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/78.jpg'
   },
   {
     id: '11',
-    name: 'Laura Achieng',
+    name: 'LAURA ACHIENG',
     email: 'laura.achieng@swiftaid.com',
     username: 'laura.achieng',
     role: 'driver',
@@ -143,11 +143,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC010',
     status: 'available',
     currentLocation: 'West County Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/women/40.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/79.jpg'
   },
   {
     id: '12',
-    name: 'Moses Muyoga',
+    name: 'MOSES MUYOGA',
     email: 'moses.muyoga@swiftaid.com',
     username: 'moses.muyoga',
     role: 'driver',
@@ -158,11 +158,11 @@ export const realDriverProfiles: User[] = [
     status: 'busy',
     currentLocation: 'Downtown Area',
     currentJob: 'Patient transfer to specialized facility',
-    photoUrl: 'https://randomuser.me/api/portraits/men/39.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/78.jpg'
   },
   {
     id: '13',
-    name: 'Obare Mercy',
+    name: 'OBARE MERCY',
     email: 'obare.mercy@swiftaid.com',
     username: 'obare.mercy',
     role: 'driver',
@@ -172,11 +172,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC012',
     status: 'available',
     currentLocation: 'North District Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/women/41.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/80.jpg'
   },
   {
     id: '14',
-    name: 'Salim Bizi',
+    name: 'SALIM BIZI',
     email: 'salim.bizi@swiftaid.com',
     username: 'salim.bizi',
     role: 'driver',
@@ -186,11 +186,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC013',
     status: 'offline',
     currentLocation: 'Off duty',
-    photoUrl: 'https://randomuser.me/api/portraits/men/40.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/79.jpg'
   },
   {
     id: '15',
-    name: 'Reagan Mutua',
+    name: 'REAGAN MUTUA',
     email: 'reagan.mutua@swiftaid.com',
     username: 'reagan.mutua',
     role: 'driver',
@@ -200,11 +200,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC014',
     status: 'available',
     currentLocation: 'Central Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/men/41.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/80.jpg'
   },
   {
     id: '16',
-    name: 'Enly Masinde',
+    name: 'ENLY MASINDE',
     email: 'enly.masinde@swiftaid.com',
     username: 'enly.masinde',
     role: 'driver',
@@ -215,11 +215,11 @@ export const realDriverProfiles: User[] = [
     status: 'busy',
     currentLocation: 'Highway Intersection',
     currentJob: 'Emergency medical response',
-    photoUrl: 'https://randomuser.me/api/portraits/women/42.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/81.jpg'
   },
   {
     id: '17',
-    name: 'Kenya Nassir',
+    name: 'KENYA NASSIR',
     email: 'kenya.nassir@swiftaid.com',
     username: 'kenya.nassir',
     role: 'driver',
@@ -229,11 +229,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC016',
     status: 'available',
     currentLocation: 'South Community Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/women/43.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/82.jpg'
   },
   {
     id: '18',
-    name: 'Said Swaleh',
+    name: 'SAID SWALEH',
     email: 'said.swaleh@swiftaid.com',
     username: 'said.swaleh',
     role: 'driver',
@@ -243,11 +243,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC017',
     status: 'offline',
     currentLocation: 'Off duty',
-    photoUrl: 'https://randomuser.me/api/portraits/men/42.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/81.jpg'
   },
   {
     id: '19',
-    name: 'Tabitha Ndumi',
+    name: 'TABITHA NDUMI',
     email: 'tabitha.ndumi@swiftaid.com',
     username: 'tabitha.ndumi',
     role: 'driver',
@@ -257,11 +257,11 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC018',
     status: 'available',
     currentLocation: 'Riverside Medical Center',
-    photoUrl: 'https://randomuser.me/api/portraits/women/44.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/83.jpg'
   },
   {
     id: '20',
-    name: 'Alice Matano',
+    name: 'ALICE MATANO',
     email: 'alice.matano@swiftaid.com',
     username: 'alice.matano',
     role: 'driver',
@@ -272,11 +272,11 @@ export const realDriverProfiles: User[] = [
     status: 'busy',
     currentLocation: 'Downtown Area',
     currentJob: 'Patient transfer to specialized facility',
-    photoUrl: 'https://randomuser.me/api/portraits/women/45.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/84.jpg'
   },
   {
     id: '21',
-    name: 'Mary Shirleen',
+    name: 'MARY SHIRLEEN',
     email: 'mary.shirleen@swiftaid.com',
     username: 'mary.shirleen',
     role: 'driver',
@@ -286,6 +286,6 @@ export const realDriverProfiles: User[] = [
     licenseNumber: 'LIC020',
     status: 'available',
     currentLocation: 'West County Hospital',
-    photoUrl: 'https://randomuser.me/api/portraits/women/46.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/85.jpg'
   }
 ];

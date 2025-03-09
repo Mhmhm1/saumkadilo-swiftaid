@@ -67,7 +67,7 @@ export const mockRequests: EmergencyRequest[] = [];
 export const mockDrivers: Driver[] = [
   {
     id: '2',
-    name: 'Kivinga Wambua',
+    name: 'KIVINGA WAMBUA',
     status: 'available',
     location: {
       coordinates: {
@@ -81,11 +81,11 @@ export const mockDrivers: Driver[] = [
     ambulanceId: 'AMB001',
     licenseNumber: 'LIC001',
     phone: '123-456-7891',
-    photoUrl: 'https://randomuser.me/api/portraits/men/35.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/men/74.jpg'
   },
   {
     id: '3',
-    name: 'Elizabeth Kadzo',
+    name: 'ELIZABETH KADZO',
     status: 'available',
     location: {
       coordinates: {
@@ -99,29 +99,29 @@ export const mockDrivers: Driver[] = [
     ambulanceId: 'AMB002',
     licenseNumber: 'LIC002',
     phone: '123-456-7892',
-    photoUrl: 'https://randomuser.me/api/portraits/women/35.jpg'
+    photoUrl: 'https://randomuser.me/api/portraits/women/74.jpg'
   }
 ];
 
 const additionalDrivers = [
-  { id: '4', name: 'Cyrus Wambua', photoUrl: 'https://randomuser.me/api/portraits/men/36.jpg' },
-  { id: '5', name: 'Dunson Mwandwa', photoUrl: 'https://randomuser.me/api/portraits/men/37.jpg' },
-  { id: '6', name: 'Masha Ngovi', photoUrl: 'https://randomuser.me/api/portraits/women/36.jpg' },
-  { id: '7', name: 'Godfrey Mambo', photoUrl: 'https://randomuser.me/api/portraits/men/38.jpg' },
-  { id: '8', name: 'Firdaus Said', photoUrl: 'https://randomuser.me/api/portraits/women/37.jpg' },
-  { id: '9', name: 'Saida Seif', photoUrl: 'https://randomuser.me/api/portraits/women/38.jpg' },
-  { id: '10', name: 'Anna Stephen', photoUrl: 'https://randomuser.me/api/portraits/women/39.jpg' },
-  { id: '11', name: 'Laura Achieng', photoUrl: 'https://randomuser.me/api/portraits/women/40.jpg' },
-  { id: '12', name: 'Moses Muyoga', photoUrl: 'https://randomuser.me/api/portraits/men/39.jpg' },
-  { id: '13', name: 'Obare Mercy', photoUrl: 'https://randomuser.me/api/portraits/women/41.jpg' },
-  { id: '14', name: 'Salim Bizi', photoUrl: 'https://randomuser.me/api/portraits/men/40.jpg' },
-  { id: '15', name: 'Reagan Mutua', photoUrl: 'https://randomuser.me/api/portraits/men/41.jpg' },
-  { id: '16', name: 'Enly Masinde', photoUrl: 'https://randomuser.me/api/portraits/women/42.jpg' },
-  { id: '17', name: 'Kenya Nassir', photoUrl: 'https://randomuser.me/api/portraits/women/43.jpg' },
-  { id: '18', name: 'Said Swaleh', photoUrl: 'https://randomuser.me/api/portraits/men/42.jpg' },
-  { id: '19', name: 'Tabitha Ndumi', photoUrl: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { id: '20', name: 'Alice Matano', photoUrl: 'https://randomuser.me/api/portraits/women/45.jpg' },
-  { id: '21', name: 'Mary Shirleen', photoUrl: 'https://randomuser.me/api/portraits/women/46.jpg' }
+  { id: '4', name: 'CYRUS WAMBUA', photoUrl: 'https://randomuser.me/api/portraits/men/75.jpg' },
+  { id: '5', name: 'DUNSON MWANDWA', photoUrl: 'https://randomuser.me/api/portraits/men/76.jpg' },
+  { id: '6', name: 'MASHA NGOVI', photoUrl: 'https://randomuser.me/api/portraits/women/75.jpg' },
+  { id: '7', name: 'GODFREY MAMBO', photoUrl: 'https://randomuser.me/api/portraits/men/77.jpg' },
+  { id: '8', name: 'FIRDAUS SAID', photoUrl: 'https://randomuser.me/api/portraits/women/76.jpg' },
+  { id: '9', name: 'SAIDA SEIF', photoUrl: 'https://randomuser.me/api/portraits/women/77.jpg' },
+  { id: '10', name: 'ANNA STEPHEN', photoUrl: 'https://randomuser.me/api/portraits/women/78.jpg' },
+  { id: '11', name: 'LAURA ACHIENG', photoUrl: 'https://randomuser.me/api/portraits/women/79.jpg' },
+  { id: '12', name: 'MOSES MUYOGA', photoUrl: 'https://randomuser.me/api/portraits/men/78.jpg' },
+  { id: '13', name: 'OBARE MERCY', photoUrl: 'https://randomuser.me/api/portraits/women/80.jpg' },
+  { id: '14', name: 'SALIM BIZI', photoUrl: 'https://randomuser.me/api/portraits/men/79.jpg' },
+  { id: '15', name: 'REAGAN MUTUA', photoUrl: 'https://randomuser.me/api/portraits/men/80.jpg' },
+  { id: '16', name: 'ENLY MASINDE', photoUrl: 'https://randomuser.me/api/portraits/women/81.jpg' },
+  { id: '17', name: 'KENYA NASSIR', photoUrl: 'https://randomuser.me/api/portraits/women/82.jpg' },
+  { id: '18', name: 'SAID SWALEH', photoUrl: 'https://randomuser.me/api/portraits/men/81.jpg' },
+  { id: '19', name: 'TABITHA NDUMI', photoUrl: 'https://randomuser.me/api/portraits/women/83.jpg' },
+  { id: '20', name: 'ALICE MATANO', photoUrl: 'https://randomuser.me/api/portraits/women/84.jpg' },
+  { id: '21', name: 'MARY SHIRLEEN', photoUrl: 'https://randomuser.me/api/portraits/women/85.jpg' }
 ];
 
 for (let i = 0; i < additionalDrivers.length; i++) {
