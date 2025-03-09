@@ -173,15 +173,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               variant="outline"
               size="sm"
               onClick={() => {
-                setEmail('john.smith');
-                setPassword('JohnSmith123');
+                setEmail('kivinga.wambua');
+                setPassword('driver123');
               }}
               className={cn(
                 "text-xs",
-                email === 'john.smith' && "border-primary text-primary"
+                email === 'kivinga.wambua' && "border-primary text-primary"
               )}
             >
-              John (Driver)
+              Kivinga (Driver)
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -189,29 +189,29 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               variant="outline"
               size="sm"
               onClick={() => {
-                setEmail('sarah.johnson');
-                setPassword('SarahJohnson123');
+                setEmail('elizabeth.kadzo');
+                setPassword('driver123');
               }}
               className={cn(
                 "text-xs",
-                email === 'sarah.johnson' && "border-primary text-primary"
+                email === 'elizabeth.kadzo' && "border-primary text-primary"
               )}
             >
-              Sarah (Driver)
+              Elizabeth (Driver)
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setEmail('michael.brown');
-                setPassword('MichaelBrown123');
+                setEmail('cyrus.wambua');
+                setPassword('driver123');
               }}
               className={cn(
                 "text-xs",
-                email === 'michael.brown' && "border-primary text-primary"
+                email === 'cyrus.wambua' && "border-primary text-primary"
               )}
             >
-              Michael (Driver)
+              Cyrus (Driver)
             </Button>
           </div>
         </div>
