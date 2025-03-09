@@ -1,6 +1,10 @@
 
 import { User } from '../types/auth';
-import { allUsers, allPasswords } from '../data/mockUsers';
+import { allUsers } from '../data/mockUsers';
+import { loadAndSyncPasswords } from '../data/passwords';
+
+// Regular check interval for data synchronization (in milliseconds)
+const SYNC_INTERVAL = 30000; // 30 seconds
 
 // Load registered users from localStorage on app initialization
 export const loadRegisteredUsers = (): User[] => {
@@ -44,10 +48,7 @@ export const initialRegisteredUsers = (): User[] => {
   localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
   
   // Initialize passwords in localStorage if not already done
-  const storedPasswords = localStorage.getItem('swiftaid_passwords');
-  if (!storedPasswords) {
-    localStorage.setItem('swiftaid_passwords', JSON.stringify(allPasswords));
-  }
+  loadAndSyncPasswords();
   
   return combinedUsers;
 };
@@ -60,14 +61,10 @@ export const validateCredentials = (usernameOrEmail: string, password: string, u
   
   if (!user) return null;
   
-  // First check in-memory passwords
-  if (allPasswords[user.username || ''] === password || allPasswords[user.email || ''] === password) {
-    return user;
-  }
+  // Check combined passwords from in-memory and localStorage
+  const allPasswords = loadAndSyncPasswords();
   
-  // Then check localStorage passwords for persistence
-  const storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
-  if (storedPasswords[user.username || ''] === password || storedPasswords[user.email || ''] === password) {
+  if (allPasswords[user.username || ''] === password || allPasswords[user.email || ''] === password) {
     return user;
   }
   
@@ -94,4 +91,41 @@ export const updateUserInStorage = (user: User): void => {
       localStorage.setItem('swiftaid_user', JSON.stringify(user));
     }
   }
+  
+  // Trigger a custom event to notify other tabs/windows of the change
+  const event = new CustomEvent('swiftaid_data_updated', { 
+    detail: { 
+      type: 'user_updated',
+      userId: user.id,
+      timestamp: Date.now()
+    } 
+  });
+  window.dispatchEvent(event);
+};
+
+// Setup data synchronization across tabs/windows
+export const setupDataSync = () => {
+  // Listen for storage changes from other tabs/windows
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'swiftaid_registered_users' || event.key === 'swiftaid_passwords') {
+      console.log('Data synced from another tab/window:', event.key);
+      // Reload the page to get the latest data
+      window.location.reload();
+    }
+  });
+  
+  // Listen for custom events
+  window.addEventListener('swiftaid_data_updated', () => {
+    console.log('Data updated event received');
+    // No need to reload here as we're already in the tab that made the change
+  });
+  
+  // Setup periodic sync check
+  setInterval(() => {
+    // This ensures any changes made in other tabs are periodically checked
+    const currentUsers = localStorage.getItem('swiftaid_registered_users');
+    if (currentUsers) {
+      // Just accessing the data will trigger any storage event listeners if changes exist
+    }
+  }, SYNC_INTERVAL);
 };

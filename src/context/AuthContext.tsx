@@ -1,10 +1,11 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, AuthContextType } from '../types/auth';
-import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
+import { initialRegisteredUsers, validateCredentials, updateUserInStorage, setupDataSync } from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
-import { allPasswords } from '../data/mockUsers';
+import { loadAndSyncPasswords } from '../data/passwords';
 
 // Initialize the registered users array
 let registeredUsers = initialRegisteredUsers();
@@ -16,7 +17,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
+  // Setup cross-device synchronization
   useEffect(() => {
+    setupDataSync();
+    
     // Check if user is already logged in (from localStorage)
     const storedUser = localStorage.getItem('swiftaid_user');
     if (storedUser) {
@@ -35,7 +39,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     setLoading(false);
-  }, []);
+    
+    // Listen for storage events from other tabs
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'swiftaid_user' && event.newValue === null) {
+        // User logged out in another tab
+        setCurrentUser(null);
+        navigate('/login');
+      } else if (event.key === 'swiftaid_registered_users' && currentUser) {
+        // User data changed in another tab, refresh current user
+        try {
+          const updatedUsers = JSON.parse(event.newValue || '[]');
+          const updatedUser = updatedUsers.find((u: User) => currentUser && u.id === currentUser.id);
+          if (updatedUser) {
+            setCurrentUser(updatedUser);
+          }
+        } catch (error) {
+          console.error('Error processing storage event:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [navigate, currentUser]);
 
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
@@ -114,14 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update localStorage with new registered users
       localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
       
-      // Also add to mock passwords
-      // Note: In a real app, we would hash passwords and this would be done server-side
-      // This is for demo purposes only
-      const { mockPasswords } = await import('../data/mockUsers');
-      mockPasswords[email] = password;
-      mockPasswords[username] = password;
-      
-      // Create a persistent passwords object in localStorage
+      // Update passwords in localStorage
       let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
       storedPasswords[email] = password;
       storedPasswords[username] = password;

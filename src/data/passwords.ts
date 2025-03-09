@@ -43,3 +43,26 @@ export const generateEmailPasswords = (users: User[]): { [key: string]: string }
   
   return emailPasswords;
 };
+
+// Ensure we load any passwords from localStorage
+export const loadAndSyncPasswords = () => {
+  const storedPasswords = localStorage.getItem('swiftaid_passwords');
+  let allSyncedPasswords = { ...mockPasswords };
+  
+  if (storedPasswords) {
+    try {
+      const parsedPasswords = JSON.parse(storedPasswords);
+      allSyncedPasswords = { ...allSyncedPasswords, ...parsedPasswords };
+      
+      // Sync back to localStorage to ensure consistency
+      localStorage.setItem('swiftaid_passwords', JSON.stringify(allSyncedPasswords));
+    } catch (error) {
+      console.error('Error parsing stored passwords:', error);
+    }
+  } else {
+    // Initialize if not exist
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(allSyncedPasswords));
+  }
+  
+  return allSyncedPasswords;
+};
