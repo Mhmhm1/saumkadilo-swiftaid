@@ -1,6 +1,6 @@
 
 import { User } from '../types/auth';
-import { realDriverProfiles, mockPasswords } from '../data/mockUsers';
+import { allUsers, allPasswords } from '../data/mockUsers';
 
 // Load registered users from localStorage on app initialization
 export const loadRegisteredUsers = (): User[] => {
@@ -19,7 +19,7 @@ export const initialRegisteredUsers = (): User[] => {
   if (storedUsers.length > 0) {
     // Just check if we have all the default drivers and admin
     const hasAdmin = storedUsers.some((user: User) => user.username === 'admin');
-    const hasDriver = storedUsers.some((user: User) => user.username === 'john.smith');
+    const hasDriver = storedUsers.some((user: User) => user.username === 'kivinga.wambua');
     
     if (hasAdmin && hasDriver) {
       return storedUsers;
@@ -32,13 +32,13 @@ export const initialRegisteredUsers = (): User[] => {
   
   // Remove existing real profiles to avoid duplicates with different data
   const filteredUsers = storedUsers.filter((user: User) => 
-    !realDriverProfiles.some(profile => 
+    !allUsers.some(profile => 
       profile.username === user.username || profile.email === user.email
     )
   );
   
   // Add real profiles
-  const combinedUsers = [...filteredUsers, ...realDriverProfiles];
+  const combinedUsers = [...filteredUsers, ...allUsers];
   
   // Save to localStorage
   localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
@@ -46,7 +46,7 @@ export const initialRegisteredUsers = (): User[] => {
   // Initialize passwords in localStorage if not already done
   const storedPasswords = localStorage.getItem('swiftaid_passwords');
   if (!storedPasswords) {
-    localStorage.setItem('swiftaid_passwords', JSON.stringify(mockPasswords));
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(allPasswords));
   }
   
   return combinedUsers;
@@ -61,7 +61,7 @@ export const validateCredentials = (usernameOrEmail: string, password: string, u
   if (!user) return null;
   
   // First check in-memory passwords
-  if (mockPasswords[user.username || ''] === password || mockPasswords[user.email || ''] === password) {
+  if (allPasswords[user.username || ''] === password || allPasswords[user.email || ''] === password) {
     return user;
   }
   

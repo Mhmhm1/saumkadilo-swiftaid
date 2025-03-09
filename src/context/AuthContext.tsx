@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { User, AuthContextType } from '../types/auth';
 import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
+import { allPasswords } from '../data/mockUsers';
 
 // Initialize the registered users array
 let registeredUsers = initialRegisteredUsers();
