@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -404,7 +403,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
           </div>
         )}
         
-        {!userRole === 'admin' && (
+        {userRole !== 'admin' && (
           <Button
             variant="outline"
             onClick={() => setHistoryTab(!historyTab)}
