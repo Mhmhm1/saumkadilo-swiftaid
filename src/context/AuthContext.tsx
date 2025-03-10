@@ -34,19 +34,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw error;
           }
           
-          // Map Supabase profile to our User type
+          // Map Supabase profile to our User type with proper type casting
           const user: User = {
             id: profile.id,
             name: profile.name,
             email: profile.email,
             username: profile.username,
-            role: profile.role,
+            // Cast string to allowed role types
+            role: profile.role as 'requester' | 'driver' | 'admin',
             phone: profile.phone,
             driverId: profile.driver_id,
             ambulanceId: profile.ambulance_id,
             licenseNumber: profile.license_number,
             photoUrl: profile.photo_url,
-            status: profile.status,
+            // Cast string to allowed status types
+            status: profile.status as 'available' | 'busy' | 'offline',
             currentLocation: profile.current_location,
             currentJob: profile.current_job
           };
@@ -78,19 +80,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
           
-          // Map Supabase profile to our User type
+          // Map Supabase profile to our User type with proper type casting
           const user: User = {
             id: profile.id,
             name: profile.name,
             email: profile.email,
             username: profile.username,
-            role: profile.role,
+            // Cast string to allowed role types
+            role: profile.role as 'requester' | 'driver' | 'admin',
             phone: profile.phone,
             driverId: profile.driver_id,
             ambulanceId: profile.ambulance_id,
             licenseNumber: profile.license_number,
             photoUrl: profile.photo_url,
-            status: profile.status,
+            // Cast string to allowed status types
+            status: profile.status as 'available' | 'busy' | 'offline',
             currentLocation: profile.current_location,
             currentJob: profile.current_job
           };
