@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/context/AuthContext';
-import { Ambulance, Loader2 } from 'lucide-react';
+import { Ambulance, Info, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -144,6 +145,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               )}
             </Button>
           </form>
+          
+          {mode === 'login' && (
+            <div className="mt-4 p-3 border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50 rounded-md">
+              <div className="flex items-start">
+                <Info className="h-5 w-5 text-amber-700 dark:text-amber-500 mr-2 mt-0.5" />
+                <p className="text-xs text-amber-800 dark:text-amber-400">
+                  For this school project, email verification is required. After registration, please check your email 
+                  and click the verification link before you can login. You can also use one of the demo accounts below.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex justify-center">
           <div className="text-sm text-center">

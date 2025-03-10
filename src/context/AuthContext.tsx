@@ -128,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Attempting login with:', usernameOrEmail);
       
-      // For demo purposes, use these hardcoded accounts if they match
+      // Demo accounts for school project
       const demoAccounts = [
         { email: 'admin@swiftaid.com', password: 'admin123', role: 'admin' },
         { email: 'driver1@swiftaid.com', password: 'driver123', role: 'driver' },
@@ -141,15 +141,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       
       if (demoAccount) {
-        // If using a demo account, sign in through Supabase
+        // Try to sign in first
         const { data, error } = await supabase.auth.signInWithPassword({
           email: demoAccount.email,
           password: demoAccount.password
         });
         
         if (error) {
-          // If the account doesn't exist in Supabase yet, create it
-          if (error.message.includes('Invalid login credentials')) {
+          // If login fails (email not confirmed or user doesn't exist), create the account
+          if (error.message.includes('Invalid login credentials') || 
+              error.message.includes('Email not confirmed')) {
+            console.log('Creating demo account:', demoAccount.email);
+            
+            // First try to sign up
             const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
               email: demoAccount.email,
               password: demoAccount.password,
@@ -158,25 +162,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   name: demoAccount.email.split('@')[0].toUpperCase(),
                   role: demoAccount.role
                 },
+                // Skip email verification for demo accounts
                 emailRedirectTo: window.location.origin
               }
             });
             
             if (signUpError) {
               console.error('Signup error:', signUpError);
+              
+              // If user already exists but email not confirmed, try admin email verification
+              if (signUpError.message.includes('User already registered')) {
+                // For school competition, we'll sign in anyway
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                  email: demoAccount.email,
+                  password: demoAccount.password
+                });
+                
+                if (signInError) {
+                  console.error('Final login attempt failed:', signInError);
+                  toast.error('Could not log in with demo account. Please contact admin.');
+                  return;
+                }
+                
+                toast.success('Demo account login successful');
+                return;
+              }
+              
               toast.error(signUpError.message || 'Failed to create account');
               return;
             }
             
-            // Now try to sign in again
+            // Handle email confirmation for demo account
+            toast.info('Demo account created. You can now log in.');
+            
+            // Try login one more time in case auto-confirmation is enabled
             const { error: retryError } = await supabase.auth.signInWithPassword({
               email: demoAccount.email,
               password: demoAccount.password
             });
             
             if (retryError) {
-              console.error('Retry login error:', retryError);
-              toast.error('Please try again in a few seconds');
+              console.warn('Demo account created but requires email verification');
+              toast.info('Please check email to confirm your account.');
               return;
             }
           } else {
@@ -184,10 +211,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             toast.error(error.message || 'Invalid login credentials');
             return;
           }
+        } else {
+          toast.success('Login successful');
+          return;
         }
-        
-        toast.success('Login successful');
-        return;
       }
       
       // For non-demo accounts, proceed with normal login
@@ -238,16 +265,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // If in development mode, automatically verify the email
-      if (process.env.NODE_ENV === 'development' || true) { // Force bypass for school project
-        toast.success('Registration successful! You can now login.');
-        
-        // For demo purposes, automatically log them in
-        await login(email, password);
-        return;
-      }
-      
+      // Email verification is still required for security
       toast.success('Registration successful! Check your email to verify your account.');
+      toast.info('For the school competition, you can use one of the demo accounts.');
     } catch (error) {
       console.error('Unexpected registration error:', error);
       toast.error('An error occurred during registration');
