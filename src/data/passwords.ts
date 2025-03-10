@@ -1,3 +1,4 @@
+
 import { User } from '../types/auth';
 
 // Mock password entries for our users
@@ -43,27 +44,24 @@ export const generateEmailPasswords = (users: User[]): { [key: string]: string }
   return emailPasswords;
 };
 
-// Use sessionStorage for temporary session data, while keeping localStorage for persistent data
-// This helps synchronize across tabs within the same browser while maintaining device independence
+// Global password storage approach
 export const loadAndSyncPasswords = () => {
   // Default passwords from our predefined list
-  let allSyncedPasswords = { ...mockPasswords };
+  let allPasswords = { ...mockPasswords };
   
   try {
-    // Try to load from localStorage (persistent across browser sessions)
+    // Try to load user passwords from localStorage
     const storedPasswords = localStorage.getItem('swiftaid_passwords');
     if (storedPasswords) {
       const parsedPasswords = JSON.parse(storedPasswords);
-      allSyncedPasswords = { ...allSyncedPasswords, ...parsedPasswords };
+      // Merge with our default passwords, giving priority to stored passwords
+      allPasswords = { ...allPasswords, ...parsedPasswords };
     }
     
-    // Always ensure localStorage has the latest combined passwords
-    localStorage.setItem('swiftaid_passwords', JSON.stringify(allSyncedPasswords));
+    // Always update localStorage with the latest combined passwords
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(allPasswords));
     
-    // Use sessionStorage for the current session
-    sessionStorage.setItem('swiftaid_current_passwords', JSON.stringify(allSyncedPasswords));
-    
-    return allSyncedPasswords;
+    return allPasswords;
   } catch (error) {
     console.error('Error processing passwords:', error);
     return mockPasswords; // Fallback to defaults if there's an error
@@ -73,18 +71,19 @@ export const loadAndSyncPasswords = () => {
 // New function to add a user's password and sync it
 export const addUserPassword = (usernameOrEmail: string, password: string): void => {
   try {
-    let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
-    storedPasswords = { ...storedPasswords, [usernameOrEmail]: password };
-    localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+    // Load current passwords
+    const allPasswords = loadAndSyncPasswords();
     
-    // Update session storage too
-    sessionStorage.setItem('swiftaid_current_passwords', JSON.stringify(storedPasswords));
+    // Add or update the password
+    const updatedPasswords = { 
+      ...allPasswords, 
+      [usernameOrEmail]: password 
+    };
     
-    // Dispatch a custom event for other tabs to pick up
-    const event = new CustomEvent('swiftaid_password_updated', { 
-      detail: { timestamp: Date.now() }
-    });
-    window.dispatchEvent(event);
+    // Save back to localStorage
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(updatedPasswords));
+    
+    console.log(`Password saved for: ${usernameOrEmail}`);
   } catch (error) {
     console.error('Error adding user password:', error);
   }

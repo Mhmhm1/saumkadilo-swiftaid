@@ -6,12 +6,12 @@ import {
   initialRegisteredUsers, 
   validateCredentials, 
   updateUserInStorage, 
-  setupDataSync,
-  registerUser
+  registerUser,
+  setupDataSync
 } from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
 
-// Initialize the registered users array
+// Initialize the registered users array once
 let registeredUsers = initialRegisteredUsers();
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Setup cross-device synchronization
   useEffect(() => {
-    // Initialize data sync mechanism
+    // Setup the data sync mechanism
     setupDataSync();
     
     // Check if user is already logged in (from localStorage)
@@ -31,14 +31,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        
-        // Re-validate user data from the latest registered users
-        const latestRegisteredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
-        const updatedUser = latestRegisteredUsers.find((u: User) => u.id === parsedUser.id);
-        
-        // Use the latest user data if available, otherwise use the stored user
-        setCurrentUser(updatedUser || parsedUser);
-        console.log('User automatically logged in:', updatedUser?.username || parsedUser.username);
+        console.log('User automatically logged in:', parsedUser.username || parsedUser.email);
+        setCurrentUser(parsedUser);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('swiftaid_user');
@@ -46,63 +40,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setLoading(false);
     
-    // Listen for storage events from other tabs
+    // For cross-tab logout synchronization
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'swiftaid_user' && event.newValue === null) {
         // User logged out in another tab
         setCurrentUser(null);
         navigate('/login');
-      } else if (event.key === 'swiftaid_registered_users' && currentUser) {
-        // User data changed in another tab, refresh current user
-        try {
-          const updatedUsers = JSON.parse(event.newValue || '[]');
-          const updatedUser = updatedUsers.find((u: User) => currentUser && u.id === currentUser.id);
-          if (updatedUser) {
-            setCurrentUser(updatedUser);
-          }
-        } catch (error) {
-          console.error('Error processing storage event:', error);
-        }
-      }
-    };
-    
-    // Listen for data refresh events
-    const handleDataRefresh = () => {
-      // Reload the latest registered users to keep them in sync
-      registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
-      
-      // If user is logged in, make sure they have the latest data
-      if (currentUser) {
-        const updatedUser = registeredUsers.find(u => u.id === currentUser.id);
-        if (updatedUser && JSON.stringify(updatedUser) !== JSON.stringify(currentUser)) {
-          setCurrentUser(updatedUser);
-          localStorage.setItem('swiftaid_user', JSON.stringify(updatedUser));
-        }
       }
     };
     
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('swiftaid_refresh_data', handleDataRefresh);
-    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('swiftaid_refresh_data', handleDataRefresh);
     };
-  }, [navigate, currentUser]);
+  }, [navigate]);
 
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
       console.log("Login attempt with:", usernameOrEmail);
       
-      // Reload the latest registered users to ensure we have the most up-to-date data
+      // Reload the latest registered users before validating
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
       if (registeredUsers.length === 0) {
-        // If somehow we have no users, reinitialize
+        // If somehow we lost all users, reinitialize
         registeredUsers = initialRegisteredUsers();
       }
-      
-      console.log("Available users:", registeredUsers.map(u => u.username || u.email));
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -139,9 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string, phone?: string) => {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
       // Reload the latest registered users
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
       
@@ -154,6 +114,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         return;
       }
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Register the user with our helper function
       const newUser = registerUser(name, email, password, phone);

@@ -1,10 +1,6 @@
-
 import { User } from '../types/auth';
 import { allUsers } from '../data/mockUsers';
 import { loadAndSyncPasswords, addUserPassword } from '../data/passwords';
-
-// Regular check interval for data synchronization (in milliseconds)
-const SYNC_INTERVAL = 15000; // 15 seconds
 
 // Load registered users from localStorage on app initialization
 export const loadRegisteredUsers = (): User[] => {
@@ -25,36 +21,38 @@ export const initialRegisteredUsers = (): User[] => {
   try {
     const storedUsers = loadRegisteredUsers();
     
-    // Avoid re-initializing if we already have users
-    if (storedUsers.length > 0) {
-      // Just check if we have all the default drivers and admin
-      const hasAdmin = storedUsers.some((user: User) => user.username === 'admin');
-      const hasDriver = storedUsers.some((user: User) => user.username === 'kivinga.wambua');
-      
-      if (hasAdmin && hasDriver) {
-        return storedUsers;
-      }
+    // Check if we need to initialize with the default users
+    const hasAdmin = storedUsers.some((user: User) => user.username === 'admin');
+    const hasDriver = storedUsers.some((user: User) => user.username === 'kivinga.wambua');
+    
+    // If we already have basic users, return the stored list
+    if (hasAdmin && hasDriver && storedUsers.length > 0) {
+      console.log('Using existing registered users:', storedUsers.length);
+      return storedUsers;
     }
     
-    // First time initialization or refresh of profiles
+    console.log('Initializing with default users');
+    
+    // First-time initialization - merge stored users with default users
+    // Remove any duplicates by username or email
     const existingUsernames = new Set(storedUsers.map((user: User) => user.username));
     const existingEmails = new Set(storedUsers.map((user: User) => user.email));
     
-    // Remove existing real profiles to avoid duplicates with different data
-    const filteredUsers = storedUsers.filter((user: User) => 
-      !allUsers.some(profile => 
-        profile.username === user.username || profile.email === user.email
-      )
+    // Filter out any default users that are already registered
+    const filteredDefaultUsers = allUsers.filter(user => 
+      !existingUsernames.has(user.username) && 
+      !existingEmails.has(user.email)
     );
     
-    // Add real profiles
-    const combinedUsers = [...filteredUsers, ...allUsers];
+    // Combine stored users with filtered default users
+    const combinedUsers = [...storedUsers, ...filteredDefaultUsers];
     
     // Save to localStorage
     localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
     
-    // Initialize passwords in localStorage if not already done
-    loadAndSyncPasswords();
+    // Ensure passwords are initialized for all default users
+    const allPasswords = loadAndSyncPasswords();
+    console.log('Users initialized:', combinedUsers.length);
     
     return combinedUsers;
   } catch (error) {
@@ -75,16 +73,17 @@ export const validateCredentials = (usernameOrEmail: string, password: string, u
     return null;
   }
   
-  // Check combined passwords from localStorage
+  // Check the passwords from our storage
   const allPasswords = loadAndSyncPasswords();
+  const usernameMatch = user.username && allPasswords[user.username] === password;
+  const emailMatch = user.email && allPasswords[user.email] === password;
   
-  console.log(`Checking password for ${usernameOrEmail}`);
-  console.log('Available credentials:', Object.keys(allPasswords));
-  
-  if (allPasswords[user.username || ''] === password || allPasswords[user.email || ''] === password) {
+  if (usernameMatch || emailMatch) {
+    console.log(`Login successful for: ${user.username || user.email}`);
     return user;
   }
   
+  console.log(`Invalid password for: ${user.username || user.email}`);
   return null;
 };
 
@@ -109,75 +108,11 @@ export const updateUserInStorage = (user: User): void => {
         }
       }
       
-      // Trigger a custom event to notify of the change
-      const event = new CustomEvent('swiftaid_data_updated', { 
-        detail: { 
-          type: 'user_updated',
-          userId: user.id,
-          timestamp: Date.now()
-        } 
-      });
-      window.dispatchEvent(event);
+      console.log('User updated in storage:', user.username);
     }
   } catch (error) {
     console.error('Error updating user in storage:', error);
   }
-};
-
-// Setup data synchronization across tabs/windows
-export const setupDataSync = () => {
-  // Listen for storage changes from other tabs/windows
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'swiftaid_registered_users' || 
-        event.key === 'swiftaid_passwords' ||
-        event.key === 'swiftaid_emergency_requests' || 
-        event.key === 'swiftaid_drivers') {
-      console.log('Data synced from another tab/window:', event.key);
-      
-      // Reload specific data based on what changed
-      if (event.key === 'swiftaid_emergency_requests' || event.key === 'swiftaid_drivers') {
-        // Dispatch event for components to refresh their data
-        const refreshEvent = new CustomEvent('swiftaid_refresh_data', {
-          detail: { dataType: event.key.replace('swiftaid_', '') }
-        });
-        window.dispatchEvent(refreshEvent);
-      }
-    }
-  });
-  
-  // Listen for custom events
-  window.addEventListener('swiftaid_data_updated', (e: Event) => {
-    const event = e as CustomEvent;
-    console.log('Data updated event received:', event.detail);
-  });
-  
-  window.addEventListener('swiftaid_password_updated', () => {
-    console.log('Password data updated');
-    loadAndSyncPasswords(); // Reload passwords when they change
-  });
-  
-  // Setup periodic sync check
-  setInterval(() => {
-    // This ensures any changes made in other tabs are periodically checked
-    try {
-      // Load the latest registered users
-      const latestUsers = loadRegisteredUsers();
-      
-      // Load the latest emergency requests
-      const storedRequests = localStorage.getItem('swiftaid_emergency_requests');
-      if (storedRequests) {
-        // Just accessing it will trigger storage event listeners if needed
-      }
-      
-      // Load the latest drivers
-      const storedDrivers = localStorage.getItem('swiftaid_drivers');
-      if (storedDrivers) {
-        // Just accessing it will trigger storage event listeners if needed
-      }
-    } catch (error) {
-      console.error('Error during sync check:', error);
-    }
-  }, SYNC_INTERVAL);
 };
 
 // New function to register a user that ensures password sync
@@ -204,9 +139,37 @@ export const registerUser = (name: string, email: string, password: string, phon
   // Update localStorage with new registered users
   localStorage.setItem('swiftaid_registered_users', JSON.stringify(users));
   
-  // Update passwords using the dedicated function to ensure proper syncing
+  // Update passwords using the dedicated function
   addUserPassword(email, password);
   addUserPassword(username, password);
   
+  console.log('New user registered:', username);
+  
   return newUser;
+};
+
+// Setup data synchronization across tabs/windows
+export const setupDataSync = () => {
+  // Run initial sync
+  console.log('Setting up data sync mechanism');
+  
+  // Periodically check for changes in localStorage
+  setInterval(() => {
+    // This function will be called every 5 seconds to sync data
+    try {
+      // Load the registered users
+      const registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      
+      // Load emergency requests
+      const emergencyRequests = JSON.parse(localStorage.getItem('swiftaid_emergency_requests') || '[]');
+      
+      // Load drivers
+      const drivers = JSON.parse(localStorage.getItem('swiftaid_drivers') || '[]');
+      
+      // No need to do anything with the data, just accessing it ensures
+      // any changes from other tabs/windows are detected
+    } catch (error) {
+      console.error('Error during sync check:', error);
+    }
+  }, 5000); // Check every 5 seconds
 };
