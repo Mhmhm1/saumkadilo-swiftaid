@@ -1,4 +1,3 @@
-
 import { User } from '../types/auth';
 
 // Mock password entries for our users
@@ -44,25 +43,49 @@ export const generateEmailPasswords = (users: User[]): { [key: string]: string }
   return emailPasswords;
 };
 
-// Ensure we load any passwords from localStorage
+// Use sessionStorage for temporary session data, while keeping localStorage for persistent data
+// This helps synchronize across tabs within the same browser while maintaining device independence
 export const loadAndSyncPasswords = () => {
-  const storedPasswords = localStorage.getItem('swiftaid_passwords');
+  // Default passwords from our predefined list
   let allSyncedPasswords = { ...mockPasswords };
   
-  if (storedPasswords) {
-    try {
+  try {
+    // Try to load from localStorage (persistent across browser sessions)
+    const storedPasswords = localStorage.getItem('swiftaid_passwords');
+    if (storedPasswords) {
       const parsedPasswords = JSON.parse(storedPasswords);
       allSyncedPasswords = { ...allSyncedPasswords, ...parsedPasswords };
-      
-      // Sync back to localStorage to ensure consistency
-      localStorage.setItem('swiftaid_passwords', JSON.stringify(allSyncedPasswords));
-    } catch (error) {
-      console.error('Error parsing stored passwords:', error);
     }
-  } else {
-    // Initialize if not exist
+    
+    // Always ensure localStorage has the latest combined passwords
     localStorage.setItem('swiftaid_passwords', JSON.stringify(allSyncedPasswords));
+    
+    // Use sessionStorage for the current session
+    sessionStorage.setItem('swiftaid_current_passwords', JSON.stringify(allSyncedPasswords));
+    
+    return allSyncedPasswords;
+  } catch (error) {
+    console.error('Error processing passwords:', error);
+    return mockPasswords; // Fallback to defaults if there's an error
   }
-  
-  return allSyncedPasswords;
+};
+
+// New function to add a user's password and sync it
+export const addUserPassword = (usernameOrEmail: string, password: string): void => {
+  try {
+    let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
+    storedPasswords = { ...storedPasswords, [usernameOrEmail]: password };
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+    
+    // Update session storage too
+    sessionStorage.setItem('swiftaid_current_passwords', JSON.stringify(storedPasswords));
+    
+    // Dispatch a custom event for other tabs to pick up
+    const event = new CustomEvent('swiftaid_password_updated', { 
+      detail: { timestamp: Date.now() }
+    });
+    window.dispatchEvent(event);
+  } catch (error) {
+    console.error('Error adding user password:', error);
+  }
 };

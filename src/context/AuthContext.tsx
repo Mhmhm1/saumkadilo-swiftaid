@@ -1,11 +1,15 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, AuthContextType } from '../types/auth';
-import { initialRegisteredUsers, validateCredentials, updateUserInStorage, setupDataSync } from '../utils/authUtils';
+import { 
+  initialRegisteredUsers, 
+  validateCredentials, 
+  updateUserInStorage, 
+  setupDataSync,
+  registerUser
+} from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
-import { loadAndSyncPasswords } from '../data/passwords';
 
 // Initialize the registered users array
 let registeredUsers = initialRegisteredUsers();
@@ -19,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Setup cross-device synchronization
   useEffect(() => {
+    // Initialize data sync mechanism
     setupDataSync();
     
     // Check if user is already logged in (from localStorage)
@@ -33,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Use the latest user data if available, otherwise use the stored user
         setCurrentUser(updatedUser || parsedUser);
+        console.log('User automatically logged in:', updatedUser?.username || parsedUser.username);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('swiftaid_user');
@@ -60,28 +66,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
+    // Listen for data refresh events
+    const handleDataRefresh = () => {
+      // Reload the latest registered users to keep them in sync
+      registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      
+      // If user is logged in, make sure they have the latest data
+      if (currentUser) {
+        const updatedUser = registeredUsers.find(u => u.id === currentUser.id);
+        if (updatedUser && JSON.stringify(updatedUser) !== JSON.stringify(currentUser)) {
+          setCurrentUser(updatedUser);
+          localStorage.setItem('swiftaid_user', JSON.stringify(updatedUser));
+        }
+      }
+    };
+    
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('swiftaid_refresh_data', handleDataRefresh);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('swiftaid_refresh_data', handleDataRefresh);
+    };
   }, [navigate, currentUser]);
 
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Login attempt with:", usernameOrEmail);
       
-      // Reload the latest registered users
+      // Reload the latest registered users to ensure we have the most up-to-date data
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      if (registeredUsers.length === 0) {
+        // If somehow we have no users, reinitialize
+        registeredUsers = initialRegisteredUsers();
+      }
       
-      console.log("Trying to login with:", usernameOrEmail);
       console.log("Available users:", registeredUsers.map(u => u.username || u.email));
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       const user = validateCredentials(usernameOrEmail, password, registeredUsers);
       
-      console.log("Found user:", user);
-      console.log("Password check:", user && (password === password)); // Simplified for logging
-      
       if (user) {
+        console.log("Login successful for:", user.username || user.email);
         setCurrentUser(user);
         localStorage.setItem('swiftaid_user', JSON.stringify(user));
         
@@ -96,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         toast.success(`Welcome back, ${user.name}!`);
       } else {
+        console.log("Login failed for:", usernameOrEmail);
         toast.error('Invalid username/email or password');
       }
     } catch (error) {
@@ -110,7 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Reload the latest registered users
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
@@ -125,27 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // Create new user
-      const newUser: User = {
-        id: `user_${Date.now().toString(36)}`,
-        name,
-        email,
-        username,
-        role: 'requester',
-        phone
-      };
-      
-      // Add to registered users
-      registeredUsers.push(newUser);
-      
-      // Update localStorage with new registered users
-      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
-      
-      // Update passwords in localStorage
-      let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
-      storedPasswords[email] = password;
-      storedPasswords[username] = password;
-      localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+      // Register the user with our helper function
+      const newUser = registerUser(name, email, password, phone);
       
       // Auto login after registration
       setCurrentUser(newUser);
