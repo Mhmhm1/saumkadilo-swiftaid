@@ -1,9 +1,13 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, AuthContextType } from '../types/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
+import { syncDriverWithUser } from '../utils/mockData';
+import { allPasswords } from '../data/mockUsers';
+
+// Initialize the registered users array
+let registeredUsers = initialRegisteredUsers();
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -12,226 +16,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  // Check for active session and user data on mount
   useEffect(() => {
-    async function getInitialSession() {
-      setLoading(true);
-      
+    // Check if user is already logged in (from localStorage)
+    const storedUser = localStorage.getItem('swiftaid_user');
+    if (storedUser) {
       try {
-        // Check for an active session
-        const { data: { session } } = await supabase.auth.getSession();
+        const parsedUser = JSON.parse(storedUser);
         
-        if (session) {
-          // Get the user profile data
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.error('Error fetching user profile:', error);
-            throw error;
-          }
-          
-          // Map Supabase profile to our User type with proper type casting
-          const user: User = {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email || '',
-            username: profile.username || '',
-            // Cast string to allowed role types
-            role: profile.role as 'requester' | 'driver' | 'admin',
-            phone: profile.phone || '',
-            driverId: profile.driver_id || '',
-            ambulanceId: profile.ambulance_id || '',
-            licenseNumber: profile.license_number || '',
-            photoUrl: profile.photo_url || '',
-            // Cast string to allowed status types
-            status: profile.status as 'available' | 'busy' | 'offline',
-            currentLocation: profile.current_location || '',
-            currentJob: profile.current_job || ''
-          };
-          
-          setCurrentUser(user);
-        }
+        // Re-validate user data from the latest registered users
+        const latestRegisteredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+        const updatedUser = latestRegisteredUsers.find((u: User) => u.id === parsedUser.id);
+        
+        // Use the latest user data if available, otherwise use the stored user
+        setCurrentUser(updatedUser || parsedUser);
       } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('swiftaid_user');
       }
     }
-    
-    getInitialSession();
-    
-    // Set up listener for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change event:', event);
-        
-        if (event === 'SIGNED_IN' && session) {
-          // Get the user profile
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.error('Error fetching user profile:', error);
-            return;
-          }
-          
-          // Map Supabase profile to our User type with proper type casting
-          const user: User = {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email || '',
-            username: profile.username || '',
-            // Cast string to allowed role types
-            role: profile.role as 'requester' | 'driver' | 'admin',
-            phone: profile.phone || '',
-            driverId: profile.driver_id || '',
-            ambulanceId: profile.ambulance_id || '',
-            licenseNumber: profile.license_number || '',
-            photoUrl: profile.photo_url || '',
-            // Cast string to allowed status types
-            status: profile.status as 'available' | 'busy' | 'offline',
-            currentLocation: profile.current_location || '',
-            currentJob: profile.current_job || ''
-          };
-          
-          setCurrentUser(user);
-          
-          // Redirect based on role
-          if (user.role === 'admin') {
-            navigate('/admin');
-          } else if (user.role === 'driver') {
-            navigate('/driver');
-          } else {
-            navigate('/dashboard');
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setCurrentUser(null);
-          navigate('/login');
-        }
-      }
-    );
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+    setLoading(false);
+  }, []);
 
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
-      console.log('Attempting login with:', usernameOrEmail);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Demo accounts for school project
-      const demoAccounts = [
-        { email: 'admin@swiftaid.com', password: 'admin123', role: 'admin' },
-        { email: 'driver1@swiftaid.com', password: 'driver123', role: 'driver' },
-        { email: 'driver2@swiftaid.com', password: 'driver123', role: 'driver' },
-        { email: 'user@swiftaid.com', password: 'user123', role: 'requester' }
-      ];
+      // Reload the latest registered users
+      registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
       
-      const demoAccount = demoAccounts.find(
-        account => account.email === usernameOrEmail && account.password === password
-      );
+      console.log("Trying to login with:", usernameOrEmail);
+      console.log("Available users:", registeredUsers.map(u => u.username || u.email));
       
-      if (demoAccount) {
-        // Try to sign in first
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: demoAccount.email,
-          password: demoAccount.password
-        });
+      const user = validateCredentials(usernameOrEmail, password, registeredUsers);
+      
+      console.log("Found user:", user);
+      console.log("Password check:", user && (password === password)); // Simplified for logging
+      
+      if (user) {
+        setCurrentUser(user);
+        localStorage.setItem('swiftaid_user', JSON.stringify(user));
         
-        if (error) {
-          // If login fails (email not confirmed or user doesn't exist), create the account
-          if (error.message.includes('Invalid login credentials') || 
-              error.message.includes('Email not confirmed')) {
-            console.log('Creating demo account:', demoAccount.email);
-            
-            // First try to sign up
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-              email: demoAccount.email,
-              password: demoAccount.password,
-              options: {
-                data: {
-                  name: demoAccount.email.split('@')[0].toUpperCase(),
-                  role: demoAccount.role
-                },
-                // Skip email verification for demo accounts
-                emailRedirectTo: window.location.origin
-              }
-            });
-            
-            if (signUpError) {
-              console.error('Signup error:', signUpError);
-              
-              // If user already exists but email not confirmed, try admin email verification
-              if (signUpError.message.includes('User already registered')) {
-                // For school competition, we'll sign in anyway
-                const { error: signInError } = await supabase.auth.signInWithPassword({
-                  email: demoAccount.email,
-                  password: demoAccount.password
-                });
-                
-                if (signInError) {
-                  console.error('Final login attempt failed:', signInError);
-                  toast.error('Could not log in with demo account. Please contact admin.');
-                  return;
-                }
-                
-                toast.success('Demo account login successful');
-                return;
-              }
-              
-              toast.error(signUpError.message || 'Failed to create account');
-              return;
-            }
-            
-            // Handle email confirmation for demo account
-            toast.info('Demo account created. You can now log in.');
-            
-            // Try login one more time in case auto-confirmation is enabled
-            const { error: retryError } = await supabase.auth.signInWithPassword({
-              email: demoAccount.email,
-              password: demoAccount.password
-            });
-            
-            if (retryError) {
-              console.warn('Demo account created but requires email verification');
-              toast.info('Please check email to confirm your account.');
-              return;
-            }
-          } else {
-            console.error('Login error:', error);
-            toast.error(error.message || 'Invalid login credentials');
-            return;
-          }
+        // Redirect based on role
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else if (user.role === 'driver') {
+          navigate('/driver');
         } else {
-          toast.success('Login successful');
-          return;
+          navigate('/dashboard');
         }
+        
+        toast.success(`Welcome back, ${user.name}!`);
+      } else {
+        toast.error('Invalid username/email or password');
       }
-      
-      // For non-demo accounts, proceed with normal login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@swiftaid.com`,
-        password
-      });
-      
-      if (error) {
-        console.error('Login error:', error);
-        toast.error(error.message || 'Invalid login credentials');
-        return;
-      }
-      
-      toast.success('Login successful');
     } catch (error) {
-      console.error('Unexpected login error:', error);
+      console.error('Login error:', error);
       toast.error('An error occurred during login');
     } finally {
       setLoading(false);
@@ -241,143 +82,108 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string, phone?: string) => {
     setLoading(true);
     try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reload the latest registered users
+      registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      
       // Generate a username from email
       const username = email.split('@')[0];
       
-      // 1. Create the auth user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-            username,
-            role: 'requester',
-            phone
-          },
-          emailRedirectTo: window.location.origin
-        }
-      });
-      
-      if (error) {
-        console.error('Registration error:', error);
-        toast.error(error.message || 'Registration failed');
+      // Check if email or username already exists
+      if (registeredUsers.some(u => u.email === email || u.username === username)) {
+        toast.error('Email or username already in use');
+        setLoading(false);
         return;
       }
       
-      // Email verification is still required for security
-      toast.success('Registration successful! Check your email to verify your account.');
-      toast.info('For the school competition, you can use one of the demo accounts.');
+      // Create new user
+      const newUser: User = {
+        id: `user_${Date.now().toString(36)}`,
+        name,
+        email,
+        username,
+        role: 'requester',
+        phone
+      };
+      
+      // Add to registered users
+      registeredUsers.push(newUser);
+      
+      // Update localStorage with new registered users
+      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
+      
+      // Also add to mock passwords
+      // Note: In a real app, we would hash passwords and this would be done server-side
+      // This is for demo purposes only
+      const { mockPasswords } = await import('../data/mockUsers');
+      mockPasswords[email] = password;
+      mockPasswords[username] = password;
+      
+      // Create a persistent passwords object in localStorage
+      let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
+      storedPasswords[email] = password;
+      storedPasswords[username] = password;
+      localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+      
+      // Auto login after registration
+      setCurrentUser(newUser);
+      localStorage.setItem('swiftaid_user', JSON.stringify(newUser));
+      
+      toast.success('Registration successful');
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Unexpected registration error:', error);
+      console.error('Registration error:', error);
       toast.error('An error occurred during registration');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateDriverStatus = async (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => {
+  const updateDriverStatus = (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => {
+    if (!currentUser || currentUser.role !== 'driver') {
+      return;
+    }
+
+    const updatedUser = {
+      ...currentUser,
+      status,
+      currentLocation: location || currentUser.currentLocation,
+      currentJob: job || currentUser.currentJob
+    };
+
+    setCurrentUser(updatedUser);
+    updateUserInStorage(updatedUser);
+    toast.success(`Status updated to ${status}`);
+  };
+
+  const updateUserProfile = (updates: Partial<User>) => {
     if (!currentUser) {
       return;
     }
 
-    try {
-      const updates = {
-        status,
-        current_location: location || currentUser.currentLocation,
-        current_job: job || currentUser.currentJob
-      };
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', currentUser.id);
-      
-      if (error) {
-        console.error('Error updating driver status:', error);
-        toast.error('Failed to update status');
-        return;
-      }
-      
-      // Update local state
-      setCurrentUser({
-        ...currentUser,
-        status,
-        currentLocation: location || currentUser.currentLocation,
-        currentJob: job || currentUser.currentJob
-      });
-      
-      toast.success(`Status updated to ${status}`);
-    } catch (error) {
-      console.error('Error updating driver status:', error);
-      toast.error('Failed to update status');
+    const updatedUser = {
+      ...currentUser,
+      ...updates
+    };
+
+    setCurrentUser(updatedUser);
+    updateUserInStorage(updatedUser);
+    
+    // If this is a driver, also update the driver data in mockDrivers
+    if (currentUser.role === 'driver') {
+      syncDriverWithUser(currentUser.id, updates);
     }
+    
+    toast.success('Profile updated successfully');
   };
 
-  const updateUserProfile = async (updates: Partial<User>) => {
-    if (!currentUser) {
-      return;
-    }
-
-    try {
-      // Convert from our app's User format to Supabase profile format
-      const profileUpdates = {
-        name: updates.name,
-        phone: updates.phone,
-        driver_id: updates.driverId,
-        ambulance_id: updates.ambulanceId,
-        license_number: updates.licenseNumber,
-        photo_url: updates.photoUrl
-      };
-      
-      // Remove undefined values
-      Object.keys(profileUpdates).forEach(key => {
-        if (profileUpdates[key] === undefined) {
-          delete profileUpdates[key];
-        }
-      });
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(profileUpdates)
-        .eq('id', currentUser.id);
-      
-      if (error) {
-        console.error('Error updating profile:', error);
-        toast.error('Failed to update profile');
-        return;
-      }
-      
-      // Update local state
-      setCurrentUser({
-        ...currentUser,
-        ...updates
-      });
-      
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-    }
-  };
-
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Logout error:', error);
-        toast.error('Error signing out');
-        return;
-      }
-      
-      setCurrentUser(null);
-      navigate('/login');
-      toast.success('Logged out successfully');
-    } catch (error) {
-      console.error('Unexpected logout error:', error);
-      toast.error('An error occurred during logout');
-    }
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('swiftaid_user');
+    navigate('/login');
+    toast.success('Logged out successfully');
   };
 
   const isAdmin = currentUser?.role === 'admin';

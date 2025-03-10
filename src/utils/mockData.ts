@@ -62,155 +62,90 @@ export interface Driver {
   phone?: string;
 }
 
-// Helper to parse date strings back to Date objects in stored requests
-const parseStoredRequests = (requests: any[]): EmergencyRequest[] => {
-  return requests.map(req => ({
-    ...req,
-    timestamp: new Date(req.timestamp),
-    estimatedArrival: req.estimatedArrival ? new Date(req.estimatedArrival) : undefined,
-    completedAt: req.completedAt ? new Date(req.completedAt) : undefined,
-    messages: req.messages ? req.messages.map((msg: any) => ({
-      ...msg,
-      timestamp: new Date(msg.timestamp)
-    })) : [],
-    rating: req.rating ? {
-      ...req.rating,
-      timestamp: new Date(req.rating.timestamp)
-    } : undefined
-  }));
-};
+export const mockRequests: EmergencyRequest[] = [];
 
-// Load persisted requests from localStorage or initialize with empty array
-const loadPersistedRequests = (): EmergencyRequest[] => {
-  const storedRequests = localStorage.getItem('swiftaid_emergency_requests');
-  if (storedRequests) {
-    try {
-      return parseStoredRequests(JSON.parse(storedRequests));
-    } catch (error) {
-      console.error('Error parsing stored requests:', error);
-      return [];
-    }
-  }
-  return [];
-};
-
-// Initialize emergency requests from localStorage
-export const mockRequests: EmergencyRequest[] = loadPersistedRequests();
-
-// Save requests to localStorage
-const saveRequestsToStorage = () => {
-  localStorage.setItem('swiftaid_emergency_requests', JSON.stringify(mockRequests));
-};
-
-// Load persisted drivers from localStorage or initialize with default
-const loadPersistedDrivers = (): Driver[] => {
-  const storedDrivers = localStorage.getItem('swiftaid_drivers');
-  if (storedDrivers) {
-    try {
-      return JSON.parse(storedDrivers);
-    } catch (error) {
-      console.error('Error parsing stored drivers:', error);
-      return getDefaultDrivers();
-    }
-  }
-  return getDefaultDrivers();
-};
-
-// Save drivers to localStorage
-const saveDriversToStorage = () => {
-  localStorage.setItem('swiftaid_drivers', JSON.stringify(mockDrivers));
-};
-
-// Get default drivers if no saved state exists
-const getDefaultDrivers = (): Driver[] => {
-  const defaultDrivers: Driver[] = [
-    {
-      id: '2',
-      name: 'KIVINGA WAMBUA',
-      status: 'available',
-      location: {
-        coordinates: {
-          lat: 37.7735,
-          lng: -122.4210
-        },
-        address: 'Downtown Medical Center'
+export const mockDrivers: Driver[] = [
+  {
+    id: '2',
+    name: 'KIVINGA WAMBUA',
+    status: 'available',
+    location: {
+      coordinates: {
+        lat: 37.7735,
+        lng: -122.4210
       },
-      completedAssignments: 45,
-      driverId: 'DRV001',
-      ambulanceId: 'AMB001',
-      licenseNumber: 'LIC001',
-      phone: '123-456-7891',
-      photoUrl: 'https://randomuser.me/api/portraits/men/74.jpg'
+      address: 'Downtown Medical Center'
     },
-    {
-      id: '3',
-      name: 'ELIZABETH KADZO',
-      status: 'available',
-      location: {
-        coordinates: {
-          lat: 37.7790,
-          lng: -122.4120
-        },
-        address: 'North District Hospital'
+    completedAssignments: 45,
+    driverId: 'DRV001',
+    ambulanceId: 'AMB001',
+    licenseNumber: 'LIC001',
+    phone: '123-456-7891',
+    photoUrl: 'https://randomuser.me/api/portraits/men/74.jpg'
+  },
+  {
+    id: '3',
+    name: 'ELIZABETH KADZO',
+    status: 'available',
+    location: {
+      coordinates: {
+        lat: 37.7790,
+        lng: -122.4120
       },
-      completedAssignments: 32,
-      driverId: 'DRV002',
-      ambulanceId: 'AMB002',
-      licenseNumber: 'LIC002',
-      phone: '123-456-7892',
-      photoUrl: 'https://randomuser.me/api/portraits/women/74.jpg'
-    }
-  ];
-
-  const additionalDrivers = [
-    { id: '4', name: 'CYRUS WAMBUA', photoUrl: 'https://randomuser.me/api/portraits/men/75.jpg' },
-    { id: '5', name: 'DUNSON MWANDWA', photoUrl: 'https://randomuser.me/api/portraits/men/76.jpg' },
-    { id: '6', name: 'MASHA NGOVI', photoUrl: 'https://randomuser.me/api/portraits/women/75.jpg' },
-    { id: '7', name: 'GODFREY MAMBO', photoUrl: 'https://randomuser.me/api/portraits/men/77.jpg' },
-    { id: '8', name: 'FIRDAUS SAID', photoUrl: 'https://randomuser.me/api/portraits/women/76.jpg' },
-    { id: '9', name: 'SAIDA SEIF', photoUrl: 'https://randomuser.me/api/portraits/women/77.jpg' },
-    { id: '10', name: 'ANNA STEPHEN', photoUrl: 'https://randomuser.me/api/portraits/women/78.jpg' },
-    { id: '11', name: 'LAURA ACHIENG', photoUrl: 'https://randomuser.me/api/portraits/women/79.jpg' },
-    { id: '12', name: 'MOSES MUYOGA', photoUrl: 'https://randomuser.me/api/portraits/men/78.jpg' },
-    { id: '13', name: 'OBARE MERCY', photoUrl: 'https://randomuser.me/api/portraits/women/80.jpg' },
-    { id: '14', name: 'SALIM BIZI', photoUrl: 'https://randomuser.me/api/portraits/men/79.jpg' },
-    { id: '15', name: 'REAGAN MUTUA', photoUrl: 'https://randomuser.me/api/portraits/men/80.jpg' },
-    { id: '16', name: 'ENLY MASINDE', photoUrl: 'https://randomuser.me/api/portraits/women/81.jpg' },
-    { id: '17', name: 'KENYA NASSIR', photoUrl: 'https://randomuser.me/api/portraits/women/82.jpg' },
-    { id: '18', name: 'SAID SWALEH', photoUrl: 'https://randomuser.me/api/portraits/men/81.jpg' },
-    { id: '19', name: 'TABITHA NDUMI', photoUrl: 'https://randomuser.me/api/portraits/women/83.jpg' },
-    { id: '20', name: 'ALICE MATANO', photoUrl: 'https://randomuser.me/api/portraits/women/84.jpg' },
-    { id: '21', name: 'MARY SHIRLEEN', photoUrl: 'https://randomuser.me/api/portraits/women/85.jpg' }
-  ];
-
-  for (let i = 0; i < additionalDrivers.length; i++) {
-    const driver = additionalDrivers[i];
-    defaultDrivers.push({
-      id: driver.id,
-      name: driver.name,
-      status: i % 3 === 0 ? 'busy' : (i % 4 === 0 ? 'offline' : 'available'),
-      location: {
-        coordinates: {
-          lat: 37.7749 + (Math.random() * 0.02 - 0.01),
-          lng: -122.4194 + (Math.random() * 0.02 - 0.01)
-        },
-        address: i % 4 === 0 ? 'Off duty' : 'Central Hospital'
-      },
-      currentAssignment: i % 3 === 0 ? `req_dummy_${i}` : undefined,
-      completedAssignments: Math.floor(Math.random() * 50),
-      driverId: `DRV0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
-      ambulanceId: `AMB0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
-      licenseNumber: `LIC0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
-      phone: `123-456-${7893 + i}`,
-      photoUrl: driver.photoUrl
-    });
+      address: 'North District Hospital'
+    },
+    completedAssignments: 32,
+    driverId: 'DRV002',
+    ambulanceId: 'AMB002',
+    licenseNumber: 'LIC002',
+    phone: '123-456-7892',
+    photoUrl: 'https://randomuser.me/api/portraits/women/74.jpg'
   }
-  
-  return defaultDrivers;
-};
+];
 
-// Initialize drivers from localStorage
-export const mockDrivers: Driver[] = loadPersistedDrivers();
+const additionalDrivers = [
+  { id: '4', name: 'CYRUS WAMBUA', photoUrl: 'https://randomuser.me/api/portraits/men/75.jpg' },
+  { id: '5', name: 'DUNSON MWANDWA', photoUrl: 'https://randomuser.me/api/portraits/men/76.jpg' },
+  { id: '6', name: 'MASHA NGOVI', photoUrl: 'https://randomuser.me/api/portraits/women/75.jpg' },
+  { id: '7', name: 'GODFREY MAMBO', photoUrl: 'https://randomuser.me/api/portraits/men/77.jpg' },
+  { id: '8', name: 'FIRDAUS SAID', photoUrl: 'https://randomuser.me/api/portraits/women/76.jpg' },
+  { id: '9', name: 'SAIDA SEIF', photoUrl: 'https://randomuser.me/api/portraits/women/77.jpg' },
+  { id: '10', name: 'ANNA STEPHEN', photoUrl: 'https://randomuser.me/api/portraits/women/78.jpg' },
+  { id: '11', name: 'LAURA ACHIENG', photoUrl: 'https://randomuser.me/api/portraits/women/79.jpg' },
+  { id: '12', name: 'MOSES MUYOGA', photoUrl: 'https://randomuser.me/api/portraits/men/78.jpg' },
+  { id: '13', name: 'OBARE MERCY', photoUrl: 'https://randomuser.me/api/portraits/women/80.jpg' },
+  { id: '14', name: 'SALIM BIZI', photoUrl: 'https://randomuser.me/api/portraits/men/79.jpg' },
+  { id: '15', name: 'REAGAN MUTUA', photoUrl: 'https://randomuser.me/api/portraits/men/80.jpg' },
+  { id: '16', name: 'ENLY MASINDE', photoUrl: 'https://randomuser.me/api/portraits/women/81.jpg' },
+  { id: '17', name: 'KENYA NASSIR', photoUrl: 'https://randomuser.me/api/portraits/women/82.jpg' },
+  { id: '18', name: 'SAID SWALEH', photoUrl: 'https://randomuser.me/api/portraits/men/81.jpg' },
+  { id: '19', name: 'TABITHA NDUMI', photoUrl: 'https://randomuser.me/api/portraits/women/83.jpg' },
+  { id: '20', name: 'ALICE MATANO', photoUrl: 'https://randomuser.me/api/portraits/women/84.jpg' },
+  { id: '21', name: 'MARY SHIRLEEN', photoUrl: 'https://randomuser.me/api/portraits/women/85.jpg' }
+];
+
+for (let i = 0; i < additionalDrivers.length; i++) {
+  const driver = additionalDrivers[i];
+  mockDrivers.push({
+    id: driver.id,
+    name: driver.name,
+    status: i % 3 === 0 ? 'busy' : (i % 4 === 0 ? 'offline' : 'available'),
+    location: {
+      coordinates: {
+        lat: 37.7749 + (Math.random() * 0.02 - 0.01),
+        lng: -122.4194 + (Math.random() * 0.02 - 0.01)
+      },
+      address: i % 4 === 0 ? 'Off duty' : 'Central Hospital'
+    },
+    currentAssignment: i % 3 === 0 ? `req_dummy_${i}` : undefined,
+    completedAssignments: Math.floor(Math.random() * 50),
+    driverId: `DRV0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
+    ambulanceId: `AMB0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
+    licenseNumber: `LIC0${(i+3) < 10 ? '0' + (i+3) : (i+3)}`,
+    phone: `123-456-${7893 + i}`,
+    photoUrl: driver.photoUrl
+  });
+}
 
 export const firstAidTips = [
   {
@@ -323,7 +258,6 @@ export const addEmergencyRequest = (
   };
   
   mockRequests.unshift(newRequest);
-  saveRequestsToStorage();
   
   return newRequest;
 };
@@ -356,9 +290,6 @@ export const assignDriver = (requestId: string, driverId: string): void => {
       text: `Ambulance ${driver.ambulanceId} has been assigned to your request. Driver ${driver.name} is on the way.`,
       timestamp: new Date()
     });
-    
-    saveRequestsToStorage();
-    saveDriversToStorage();
   }
 };
 
@@ -380,8 +311,6 @@ export const addMessageToRequest = (
       text,
       timestamp: new Date()
     });
-    
-    saveRequestsToStorage();
   }
 };
 
@@ -430,7 +359,6 @@ export const updateRequestStatus = (
           driver.status = 'available';
           driver.currentAssignment = undefined;
           driver.completedAssignments += 1;
-          saveDriversToStorage();
         }
       }
     }
@@ -441,8 +369,6 @@ export const updateRequestStatus = (
       }
       request.notes.push(note);
     }
-    
-    saveRequestsToStorage();
   }
 };
 
@@ -458,7 +384,6 @@ export const syncDriverWithUser = (driverId: string, updates: Partial<User>): vo
   
   if (driver && updates.photoUrl) {
     driver.photoUrl = updates.photoUrl;
-    saveDriversToStorage();
     
     const registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
     
@@ -487,7 +412,6 @@ export const addRatingToRequest = (
       feedback,
       timestamp: new Date()
     };
-    saveRequestsToStorage();
   }
 };
 

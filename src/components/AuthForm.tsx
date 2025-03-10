@@ -1,14 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/context/AuthContext';
-import { Ambulance, Info, Loader2 } from 'lucide-react';
+import { Ambulance, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -22,14 +21,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const { login, register, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Clear form fields when switching between login and register
-  useEffect(() => {
-    setEmail('');
-    setPassword('');
-    setName('');
-    setPhone('');
-  }, [mode]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -38,19 +29,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     } else {
       await register(name, email, password, phone);
     }
-  };
-
-  // List of demo accounts for easy access
-  const demoAccounts = [
-    { role: 'Admin', username: 'admin@swiftaid.com', password: 'admin123' },
-    { role: 'Driver', username: 'driver1@swiftaid.com', password: 'driver123' },
-    { role: 'Driver', username: 'driver2@swiftaid.com', password: 'driver123' },
-    { role: 'User', username: 'user@swiftaid.com', password: 'user123' }
-  ];
-
-  const setDemoAccount = (username: string, password: string) => {
-    setEmail(username);
-    setPassword(password);
   };
 
   return (
@@ -78,7 +56,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  placeholder="Saumu Kadilo"
+                  placeholder="saumu kadilo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -88,11 +66,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">{mode === 'login' ? 'Email' : 'Email'}</Label>
+              <Label htmlFor="email">{mode === 'login' ? 'Username or Email' : 'Email'}</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="you@example.com"
+                type={mode === 'login' ? 'text' : 'email'}
+                placeholder={mode === 'login' ? 'username or email' : 'you@example.com'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -145,18 +123,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               )}
             </Button>
           </form>
-          
-          {mode === 'login' && (
-            <div className="mt-4 p-3 border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50 rounded-md">
-              <div className="flex items-start">
-                <Info className="h-5 w-5 text-amber-700 dark:text-amber-500 mr-2 mt-0.5" />
-                <p className="text-xs text-amber-800 dark:text-amber-400">
-                  For this school project, email verification is required. After registration, please check your email 
-                  and click the verification link before you can login. You can also use one of the demo accounts below.
-                </p>
-              </div>
-            </div>
-          )}
         </CardContent>
         <CardFooter className="flex justify-center">
           <div className="text-sm text-center">
@@ -192,10 +158,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('admin@swiftaid.com', 'admin123')}
+              onClick={() => {
+                setEmail('admin');
+                setPassword('admin123');
+              }}
               className={cn(
                 "text-xs",
-                email === 'admin@swiftaid.com' && "border-primary text-primary"
+                email === 'admin' && "border-primary text-primary"
               )}
             >
               Admin
@@ -203,37 +172,46 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('driver1@swiftaid.com', 'driver123')}
+              onClick={() => {
+                setEmail('john.smith');
+                setPassword('JohnSmith123');
+              }}
               className={cn(
                 "text-xs",
-                email === 'driver1@swiftaid.com' && "border-primary text-primary"
+                email === 'john.smith' && "border-primary text-primary"
               )}
             >
-              Driver 1
+              John (Driver)
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('driver2@swiftaid.com', 'driver123')}
+              onClick={() => {
+                setEmail('sarah.johnson');
+                setPassword('SarahJohnson123');
+              }}
               className={cn(
                 "text-xs",
-                email === 'driver2@swiftaid.com' && "border-primary text-primary"
+                email === 'sarah.johnson' && "border-primary text-primary"
               )}
             >
-              Driver 2
+              Sarah (Driver)
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('user@swiftaid.com', 'user123')}
+              onClick={() => {
+                setEmail('michael.brown');
+                setPassword('MichaelBrown123');
+              }}
               className={cn(
                 "text-xs",
-                email === 'user@swiftaid.com' && "border-primary text-primary"
+                email === 'michael.brown' && "border-primary text-primary"
               )}
             >
-              User
+              Michael (Driver)
             </Button>
           </div>
         </div>

@@ -1,75 +1,97 @@
 
 import { User } from '../types/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { allUsers, allPasswords } from '../data/mockUsers';
 
-// Function to get all users (for admin purposes)
-export const getAllUsers = async (): Promise<User[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching users:', error);
-      return [];
-    }
-    
-    // Map the database users to our app's User type with proper type casting
-    const users: User[] = data.map(profile => ({
-      id: profile.id,
-      name: profile.name,
-      email: profile.email || '',
-      username: profile.username || '',
-      // Cast string to allowed role types
-      role: profile.role as 'requester' | 'driver' | 'admin',
-      phone: profile.phone || '',
-      driverId: profile.driver_id || '',
-      ambulanceId: profile.ambulance_id || '',
-      licenseNumber: profile.license_number || '',
-      photoUrl: profile.photo_url || '',
-      // Cast string to allowed status types
-      status: profile.status as 'available' | 'busy' | 'offline',
-      currentLocation: profile.current_location || '',
-      currentJob: profile.current_job || ''
-    }));
-    
-    return users;
-  } catch (error) {
-    console.error('Error in getAllUsers:', error);
-    return [];
-  }
-};
-
-// Mock data for development when no backend is available
-export const getRegisteredUsers = (): User[] => {
-  // Try to get from localStorage first
+// Load registered users from localStorage on app initialization
+export const loadRegisteredUsers = (): User[] => {
   const storedUsers = localStorage.getItem('swiftaid_registered_users');
   if (storedUsers) {
-    try {
-      const parsedUsers = JSON.parse(storedUsers);
-      return parsedUsers.map((user: any) => ({
-        ...user,
-        // Ensure role is one of the allowed values
-        role: user.role as 'requester' | 'driver' | 'admin',
-        // Ensure status is one of the allowed values
-        status: user.status as 'available' | 'busy' | 'offline'
-      }));
-    } catch (error) {
-      console.error('Error parsing stored users:', error);
-      return [];
-    }
+    return JSON.parse(storedUsers);
   }
-  
-  // If no users in localStorage, return an empty array
   return [];
 };
 
-// For development/demo purposes
-export const saveRegisteredUser = (user: User): void => {
-  const existingUsers = getRegisteredUsers();
-  const updatedUsers = existingUsers.some(u => u.id === user.id)
-    ? existingUsers.map(u => u.id === user.id ? { ...u, ...user } : u)
-    : [...existingUsers, user];
+// Initialize registered users with the real profiles and any previously registered users
+export const initialRegisteredUsers = (): User[] => {
+  const storedUsers = loadRegisteredUsers();
   
-  localStorage.setItem('swiftaid_registered_users', JSON.stringify(updatedUsers));
+  // Avoid re-initializing if we already have users
+  if (storedUsers.length > 0) {
+    // Just check if we have all the default drivers and admin
+    const hasAdmin = storedUsers.some((user: User) => user.username === 'admin');
+    const hasDriver = storedUsers.some((user: User) => user.username === 'kivinga.wambua');
+    
+    if (hasAdmin && hasDriver) {
+      return storedUsers;
+    }
+  }
+  
+  // First time initialization or refresh of profiles
+  const existingUsernames = new Set(storedUsers.map((user: User) => user.username));
+  const existingEmails = new Set(storedUsers.map((user: User) => user.email));
+  
+  // Remove existing real profiles to avoid duplicates with different data
+  const filteredUsers = storedUsers.filter((user: User) => 
+    !allUsers.some(profile => 
+      profile.username === user.username || profile.email === user.email
+    )
+  );
+  
+  // Add real profiles
+  const combinedUsers = [...filteredUsers, ...allUsers];
+  
+  // Save to localStorage
+  localStorage.setItem('swiftaid_registered_users', JSON.stringify(combinedUsers));
+  
+  // Initialize passwords in localStorage if not already done
+  const storedPasswords = localStorage.getItem('swiftaid_passwords');
+  if (!storedPasswords) {
+    localStorage.setItem('swiftaid_passwords', JSON.stringify(allPasswords));
+  }
+  
+  return combinedUsers;
+};
+
+// Validate user credentials
+export const validateCredentials = (usernameOrEmail: string, password: string, users: User[]): User | null => {
+  const user = users.find(u => 
+    (u.username === usernameOrEmail) || (u.email === usernameOrEmail)
+  );
+  
+  if (!user) return null;
+  
+  // First check in-memory passwords
+  if (allPasswords[user.username || ''] === password || allPasswords[user.email || ''] === password) {
+    return user;
+  }
+  
+  // Then check localStorage passwords for persistence
+  const storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
+  if (storedPasswords[user.username || ''] === password || storedPasswords[user.email || ''] === password) {
+    return user;
+  }
+  
+  return null;
+};
+
+// Update user in storage
+export const updateUserInStorage = (user: User): void => {
+  // Get all registered users
+  const users = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+  
+  // Find and update the user
+  const userIndex = users.findIndex((u: User) => u.id === user.id);
+  if (userIndex !== -1) {
+    users[userIndex] = user;
+    localStorage.setItem('swiftaid_registered_users', JSON.stringify(users));
+  }
+  
+  // Also update current user if it's the same
+  const currentUser = localStorage.getItem('swiftaid_user');
+  if (currentUser) {
+    const parsedUser = JSON.parse(currentUser);
+    if (parsedUser.id === user.id) {
+      localStorage.setItem('swiftaid_user', JSON.stringify(user));
+    }
+  }
 };
