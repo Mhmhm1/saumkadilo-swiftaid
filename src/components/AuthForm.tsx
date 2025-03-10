@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -40,10 +41,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
 
   // List of demo accounts for easy access
   const demoAccounts = [
-    { role: 'Admin', username: 'admin', password: 'admin123' },
-    { role: 'Driver', username: 'kivinga.wambua', password: 'driver123', name: 'Kivinga' },
-    { role: 'Driver', username: 'elizabeth.kadzo', password: 'driver123', name: 'Elizabeth' },
-    { role: 'Driver', username: 'cyrus.wambua', password: 'driver123', name: 'Cyrus' }
+    { role: 'Admin', username: 'admin@swiftaid.com', password: 'admin123' },
+    { role: 'Driver', username: 'driver1@swiftaid.com', password: 'driver123' },
+    { role: 'Driver', username: 'driver2@swiftaid.com', password: 'driver123' },
+    { role: 'User', username: 'user@swiftaid.com', password: 'user123' }
   ];
 
   const setDemoAccount = (username: string, password: string) => {
@@ -86,11 +87,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">{mode === 'login' ? 'Username or Email' : 'Email'}</Label>
+              <Label htmlFor="email">{mode === 'login' ? 'Email' : 'Email'}</Label>
               <Input
                 id="email"
-                type={mode === 'login' ? 'text' : 'email'}
-                placeholder={mode === 'login' ? 'username or email' : 'you@example.com'}
+                type="email"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -178,10 +179,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('admin', 'admin123')}
+              onClick={() => setDemoAccount('admin@swiftaid.com', 'admin123')}
               className={cn(
                 "text-xs",
-                email === 'admin' && "border-primary text-primary"
+                email === 'admin@swiftaid.com' && "border-primary text-primary"
               )}
             >
               Admin
@@ -189,37 +190,37 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('kivinga.wambua', 'driver123')}
+              onClick={() => setDemoAccount('driver1@swiftaid.com', 'driver123')}
               className={cn(
                 "text-xs",
-                email === 'kivinga.wambua' && "border-primary text-primary"
+                email === 'driver1@swiftaid.com' && "border-primary text-primary"
               )}
             >
-              Kivinga (Driver)
+              Driver 1
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('elizabeth.kadzo', 'driver123')}
+              onClick={() => setDemoAccount('driver2@swiftaid.com', 'driver123')}
               className={cn(
                 "text-xs",
-                email === 'elizabeth.kadzo' && "border-primary text-primary"
+                email === 'driver2@swiftaid.com' && "border-primary text-primary"
               )}
             >
-              Elizabeth (Driver)
+              Driver 2
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDemoAccount('cyrus.wambua', 'driver123')}
+              onClick={() => setDemoAccount('user@swiftaid.com', 'user123')}
               className={cn(
                 "text-xs",
-                email === 'cyrus.wambua' && "border-primary text-primary"
+                email === 'user@swiftaid.com' && "border-primary text-primary"
               )}
             >
-              Cyrus (Driver)
+              User
             </Button>
           </div>
         </div>

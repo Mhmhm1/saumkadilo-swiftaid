@@ -9,7 +9,117 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      emergency_requests: {
+        Row: {
+          completed_at: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          driver_id: string | null
+          id: string
+          location: string
+          request_type: string
+          requester_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          driver_id?: string | null
+          id?: string
+          location: string
+          request_type: string
+          requester_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          driver_id?: string | null
+          id?: string
+          location?: string
+          request_type?: string
+          requester_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_requests_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          ambulance_id: string | null
+          created_at: string
+          current_job: string | null
+          current_location: string | null
+          driver_id: string | null
+          email: string | null
+          id: string
+          license_number: string | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          role: string
+          status: string | null
+          username: string | null
+        }
+        Insert: {
+          ambulance_id?: string | null
+          created_at?: string
+          current_job?: string | null
+          current_location?: string | null
+          driver_id?: string | null
+          email?: string | null
+          id: string
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          role: string
+          status?: string | null
+          username?: string | null
+        }
+        Update: {
+          ambulance_id?: string | null
+          created_at?: string
+          current_job?: string | null
+          current_location?: string | null
+          driver_id?: string | null
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          role?: string
+          status?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

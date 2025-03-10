@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/AuthContext';
 import { User, MapPin, Truck, BadgeCheck, UserRound, Camera } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const DriverProfile = () => {
   const { currentUser, updateDriverStatus, updateUserProfile } = useAuth();
@@ -30,7 +30,7 @@ const DriverProfile = () => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
@@ -46,13 +46,33 @@ const DriverProfile = () => {
       return;
     }
     
-    // Create a URL for the image
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const photoUrl = e.target?.result as string;
-      updateUserProfile({ photoUrl });
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Upload the image to Supabase Storage
+      const fileName = `${currentUser.id}_${Date.now()}.${file.name.split('.').pop()}`;
+      
+      // Create a unique path for the image
+      const filePath = `profile_photos/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Get the public URL for the uploaded image
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      // Update the user profile with the new photo URL
+      updateUserProfile({ photoUrl: urlData.publicUrl });
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      toast.error('Failed to upload image');
+    }
   };
 
   return (

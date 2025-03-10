@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,11 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/context/AuthContext';
-import { addEmergencyRequest } from '@/utils/mockData';
 import { MapPin, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from '@/integrations/supabase/client';
 
 const EmergencyRequestForm = () => {
   const { currentUser } = useAuth();
@@ -67,48 +66,36 @@ const EmergencyRequestForm = () => {
       return;
     }
     
-    if (!address || !description) {
+    if (!address || !description || !emergencyType) {
       toast.error('Please fill in all required fields');
       return;
-    }
-    
-    if (!coordinates) {
-      // For demo purposes, generate random coordinates near San Francisco
-      const baseLatSF = 37.7749;
-      const baseLngSF = -122.4194;
-      const randomLat = baseLatSF + (Math.random() * 0.02 - 0.01);
-      const randomLng = baseLngSF + (Math.random() * 0.02 - 0.01);
-      
-      setCoordinates({
-        lat: randomLat,
-        lng: randomLng
-      });
     }
     
     setLoading(true);
     
     try {
-      // Simulate a delay for the API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const locationData = {
+      // Format location data
+      const locationData = JSON.stringify({
         address,
         coordinates: coordinates || { lat: 37.7749, lng: -122.4194 } // Default to SF if not set
-      };
+      });
       
-      // Add request to mock data
-      addEmergencyRequest(
-        currentUser.id,
-        currentUser.name,
-        locationData,
-        description,
-        patientName,
-        patientAge,
-        patientGender,
-        emergencyType,
-        additionalInfo,
-        currentUser.phone
-      );
+      // Create the emergency request in Supabase
+      const { data, error } = await supabase
+        .from('emergency_requests')
+        .insert({
+          requester_id: currentUser.id,
+          request_type: emergencyType,
+          location: locationData,
+          description: description,
+          contact_name: patientName,
+          contact_phone: currentUser.phone
+        })
+        .select();
+      
+      if (error) {
+        throw error;
+      }
       
       toast.success('Emergency request submitted successfully');
       navigate('/dashboard');
