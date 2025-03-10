@@ -2,11 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, AuthContextType } from '../types/auth';
-import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
+import { 
+  initialRegisteredUsers, 
+  validateCredentials, 
+  updateUserInStorage, 
+  registerUser,
+  setupDataSync
+} from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
-import { allPasswords } from '../data/mockUsers';
 
-// Initialize the registered users array
+// Initialize the registered users array once
 let registeredUsers = initialRegisteredUsers();
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -16,45 +21,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
+  // Setup cross-device synchronization
   useEffect(() => {
+    // Setup the data sync mechanism
+    setupDataSync();
+    
     // Check if user is already logged in (from localStorage)
     const storedUser = localStorage.getItem('swiftaid_user');
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        
-        // Re-validate user data from the latest registered users
-        const latestRegisteredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
-        const updatedUser = latestRegisteredUsers.find((u: User) => u.id === parsedUser.id);
-        
-        // Use the latest user data if available, otherwise use the stored user
-        setCurrentUser(updatedUser || parsedUser);
+        console.log('User automatically logged in:', parsedUser.username || parsedUser.email);
+        setCurrentUser(parsedUser);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('swiftaid_user');
       }
     }
     setLoading(false);
-  }, []);
+    
+    // For cross-tab logout synchronization
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'swiftaid_user' && event.newValue === null) {
+        // User logged out in another tab
+        setCurrentUser(null);
+        navigate('/login');
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [navigate]);
 
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Login attempt with:", usernameOrEmail);
       
-      // Reload the latest registered users
+      // Reload the latest registered users before validating
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      if (registeredUsers.length === 0) {
+        // If somehow we lost all users, reinitialize
+        registeredUsers = initialRegisteredUsers();
+      }
       
-      console.log("Trying to login with:", usernameOrEmail);
-      console.log("Available users:", registeredUsers.map(u => u.username || u.email));
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       const user = validateCredentials(usernameOrEmail, password, registeredUsers);
       
-      console.log("Found user:", user);
-      console.log("Password check:", user && (password === password)); // Simplified for logging
-      
       if (user) {
+        console.log("Login successful for:", user.username || user.email);
         setCurrentUser(user);
         localStorage.setItem('swiftaid_user', JSON.stringify(user));
         
@@ -69,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         toast.success(`Welcome back, ${user.name}!`);
       } else {
+        console.log("Login failed for:", usernameOrEmail);
         toast.error('Invalid username/email or password');
       }
     } catch (error) {
@@ -82,9 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string, phone?: string) => {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       // Reload the latest registered users
       registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
       
@@ -98,34 +115,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // Create new user
-      const newUser: User = {
-        id: `user_${Date.now().toString(36)}`,
-        name,
-        email,
-        username,
-        role: 'requester',
-        phone
-      };
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Add to registered users
-      registeredUsers.push(newUser);
-      
-      // Update localStorage with new registered users
-      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
-      
-      // Also add to mock passwords
-      // Note: In a real app, we would hash passwords and this would be done server-side
-      // This is for demo purposes only
-      const { mockPasswords } = await import('../data/mockUsers');
-      mockPasswords[email] = password;
-      mockPasswords[username] = password;
-      
-      // Create a persistent passwords object in localStorage
-      let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
-      storedPasswords[email] = password;
-      storedPasswords[username] = password;
-      localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+      // Register the user with our helper function
+      const newUser = registerUser(name, email, password, phone);
       
       // Auto login after registration
       setCurrentUser(newUser);

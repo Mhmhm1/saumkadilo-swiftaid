@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const { login, register, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Clear form fields when switching between login and register
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setName('');
+    setPhone('');
+  }, [mode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -29,6 +36,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     } else {
       await register(name, email, password, phone);
     }
+  };
+
+  // List of demo accounts for easy access
+  const demoAccounts = [
+    { role: 'Admin', username: 'admin', password: 'admin123' },
+    { role: 'Driver', username: 'kivinga.wambua', password: 'driver123', name: 'Kivinga' },
+    { role: 'Driver', username: 'elizabeth.kadzo', password: 'driver123', name: 'Elizabeth' },
+    { role: 'Driver', username: 'cyrus.wambua', password: 'driver123', name: 'Cyrus' }
+  ];
+
+  const setDemoAccount = (username: string, password: string) => {
+    setEmail(username);
+    setPassword(password);
   };
 
   return (
@@ -56,7 +76,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  placeholder="saumu kadilo"
+                  placeholder="Saumu Kadilo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -158,10 +178,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setEmail('admin');
-                setPassword('admin123');
-              }}
+              onClick={() => setDemoAccount('admin', 'admin123')}
               className={cn(
                 "text-xs",
                 email === 'admin' && "border-primary text-primary"
@@ -172,46 +189,37 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setEmail('john.smith');
-                setPassword('JohnSmith123');
-              }}
+              onClick={() => setDemoAccount('kivinga.wambua', 'driver123')}
               className={cn(
                 "text-xs",
-                email === 'john.smith' && "border-primary text-primary"
+                email === 'kivinga.wambua' && "border-primary text-primary"
               )}
             >
-              John (Driver)
+              Kivinga (Driver)
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setEmail('sarah.johnson');
-                setPassword('SarahJohnson123');
-              }}
+              onClick={() => setDemoAccount('elizabeth.kadzo', 'driver123')}
               className={cn(
                 "text-xs",
-                email === 'sarah.johnson' && "border-primary text-primary"
+                email === 'elizabeth.kadzo' && "border-primary text-primary"
               )}
             >
-              Sarah (Driver)
+              Elizabeth (Driver)
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setEmail('michael.brown');
-                setPassword('MichaelBrown123');
-              }}
+              onClick={() => setDemoAccount('cyrus.wambua', 'driver123')}
               className={cn(
                 "text-xs",
-                email === 'michael.brown' && "border-primary text-primary"
+                email === 'cyrus.wambua' && "border-primary text-primary"
               )}
             >
-              Michael (Driver)
+              Cyrus (Driver)
             </Button>
           </div>
         </div>
