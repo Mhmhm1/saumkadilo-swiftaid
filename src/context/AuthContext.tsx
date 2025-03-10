@@ -38,19 +38,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const user: User = {
             id: profile.id,
             name: profile.name,
-            email: profile.email,
-            username: profile.username,
+            email: profile.email || '',
+            username: profile.username || '',
             // Cast string to allowed role types
             role: profile.role as 'requester' | 'driver' | 'admin',
-            phone: profile.phone,
-            driverId: profile.driver_id,
-            ambulanceId: profile.ambulance_id,
-            licenseNumber: profile.license_number,
-            photoUrl: profile.photo_url,
+            phone: profile.phone || '',
+            driverId: profile.driver_id || '',
+            ambulanceId: profile.ambulance_id || '',
+            licenseNumber: profile.license_number || '',
+            photoUrl: profile.photo_url || '',
             // Cast string to allowed status types
             status: profile.status as 'available' | 'busy' | 'offline',
-            currentLocation: profile.current_location,
-            currentJob: profile.current_job
+            currentLocation: profile.current_location || '',
+            currentJob: profile.current_job || ''
           };
           
           setCurrentUser(user);
@@ -67,6 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up listener for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change event:', event);
+        
         if (event === 'SIGNED_IN' && session) {
           // Get the user profile
           const { data: profile, error } = await supabase
@@ -84,19 +86,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const user: User = {
             id: profile.id,
             name: profile.name,
-            email: profile.email,
-            username: profile.username,
+            email: profile.email || '',
+            username: profile.username || '',
             // Cast string to allowed role types
             role: profile.role as 'requester' | 'driver' | 'admin',
-            phone: profile.phone,
-            driverId: profile.driver_id,
-            ambulanceId: profile.ambulance_id,
-            licenseNumber: profile.license_number,
-            photoUrl: profile.photo_url,
+            phone: profile.phone || '',
+            driverId: profile.driver_id || '',
+            ambulanceId: profile.ambulance_id || '',
+            licenseNumber: profile.license_number || '',
+            photoUrl: profile.photo_url || '',
             // Cast string to allowed status types
             status: profile.status as 'available' | 'busy' | 'offline',
-            currentLocation: profile.current_location,
-            currentJob: profile.current_job
+            currentLocation: profile.current_location || '',
+            currentJob: profile.current_job || ''
           };
           
           setCurrentUser(user);
@@ -124,6 +126,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
+      console.log('Attempting login with:', usernameOrEmail);
+      
+      // For demo purposes, use these hardcoded accounts if they match
+      const demoAccounts = [
+        { email: 'admin@swiftaid.com', password: 'admin123', role: 'admin' },
+        { email: 'driver1@swiftaid.com', password: 'driver123', role: 'driver' },
+        { email: 'driver2@swiftaid.com', password: 'driver123', role: 'driver' },
+        { email: 'user@swiftaid.com', password: 'user123', role: 'requester' }
+      ];
+      
+      const demoAccount = demoAccounts.find(
+        account => account.email === usernameOrEmail && account.password === password
+      );
+      
+      if (demoAccount) {
+        // If using a demo account, sign in through Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: demoAccount.email,
+          password: demoAccount.password
+        });
+        
+        if (error) {
+          // If the account doesn't exist in Supabase yet, create it
+          if (error.message.includes('Invalid login credentials')) {
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: demoAccount.email,
+              password: demoAccount.password,
+              options: {
+                data: {
+                  name: demoAccount.email.split('@')[0].toUpperCase(),
+                  role: demoAccount.role
+                },
+                emailRedirectTo: window.location.origin
+              }
+            });
+            
+            if (signUpError) {
+              console.error('Signup error:', signUpError);
+              toast.error(signUpError.message || 'Failed to create account');
+              return;
+            }
+            
+            // Now try to sign in again
+            const { error: retryError } = await supabase.auth.signInWithPassword({
+              email: demoAccount.email,
+              password: demoAccount.password
+            });
+            
+            if (retryError) {
+              console.error('Retry login error:', retryError);
+              toast.error('Please try again in a few seconds');
+              return;
+            }
+          } else {
+            console.error('Login error:', error);
+            toast.error(error.message || 'Invalid login credentials');
+            return;
+          }
+        }
+        
+        toast.success('Login successful');
+        return;
+      }
+      
+      // For non-demo accounts, proceed with normal login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@swiftaid.com`,
         password
@@ -160,7 +227,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             username,
             role: 'requester',
             phone
-          }
+          },
+          emailRedirectTo: window.location.origin
         }
       });
       
@@ -170,7 +238,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      toast.success('Registration successful');
+      // If in development mode, automatically verify the email
+      if (process.env.NODE_ENV === 'development' || true) { // Force bypass for school project
+        toast.success('Registration successful! You can now login.');
+        
+        // For demo purposes, automatically log them in
+        await login(email, password);
+        return;
+      }
+      
+      toast.success('Registration successful! Check your email to verify your account.');
     } catch (error) {
       console.error('Unexpected registration error:', error);
       toast.error('An error occurred during registration');

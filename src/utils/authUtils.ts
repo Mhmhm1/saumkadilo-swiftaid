@@ -2,128 +2,74 @@
 import { User } from '../types/auth';
 import { supabase } from '@/integrations/supabase/client';
 
-// Function to create a demo account
-export const createDemoAccount = async (
-  email: string,
-  password: string,
-  name: string,
-  role: 'admin' | 'driver' | 'requester',
-  additionalData?: Partial<User>
-) => {
-  try {
-    // Check if the user already exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const userExists = existingUsers?.users.some(user => user.email === email);
-    
-    if (!userExists) {
-      // Create the user in Supabase Auth
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          name,
-          role,
-          ...additionalData
-        }
-      });
-      
-      if (error) {
-        console.error('Error creating demo account:', error);
-        return;
-      }
-      
-      // The profile should be created automatically via the database trigger
-      console.log(`Demo account created: ${email}`);
-      return data.user;
-    }
-    
-    console.log(`Demo account already exists: ${email}`);
-  } catch (error) {
-    console.error('Error creating demo account:', error);
-  }
-};
-
-// Function to seed demo data
-export const seedDemoData = async () => {
-  // Create demo accounts
-  await createDemoAccount(
-    'admin@swiftaid.com',
-    'admin123',
-    'Admin User',
-    'admin'
-  );
-  
-  await createDemoAccount(
-    'driver1@swiftaid.com',
-    'driver123',
-    'John Driver',
-    'driver',
-    {
-      phone: '+25471234567',
-      driverId: 'DR001',
-      ambulanceId: 'AMB001',
-      licenseNumber: 'L12345',
-      status: 'available'
-    }
-  );
-  
-  await createDemoAccount(
-    'driver2@swiftaid.com',
-    'driver123',
-    'Mary Driver',
-    'driver',
-    {
-      phone: '+25472345678',
-      driverId: 'DR002',
-      ambulanceId: 'AMB002',
-      licenseNumber: 'L23456',
-      status: 'busy'
-    }
-  );
-  
-  await createDemoAccount(
-    'user@swiftaid.com',
-    'user123',
-    'Regular User',
-    'requester',
-    {
-      phone: '+25473456789'
-    }
-  );
-};
-
-// Get all users that match a specific role
-export const getUsersByRole = async (role: 'admin' | 'driver' | 'requester'): Promise<User[]> => {
+// Function to get all users (for admin purposes)
+export const getAllUsers = async (): Promise<User[]> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
-      .eq('role', role);
+      .select('*');
     
     if (error) {
-      console.error('Error fetching users by role:', error);
+      console.error('Error fetching users:', error);
       return [];
     }
     
-    // Convert database format to User type with proper type casting
-    return data.map(profile => ({
+    // Map the database users to our app's User type with proper type casting
+    const users: User[] = data.map(profile => ({
       id: profile.id,
       name: profile.name,
       email: profile.email || '',
       username: profile.username || '',
+      // Cast string to allowed role types
       role: profile.role as 'requester' | 'driver' | 'admin',
       phone: profile.phone || '',
       driverId: profile.driver_id || '',
       ambulanceId: profile.ambulance_id || '',
       licenseNumber: profile.license_number || '',
       photoUrl: profile.photo_url || '',
-      status: profile.status as 'available' | 'busy' | 'offline' || undefined,
+      // Cast string to allowed status types
+      status: profile.status as 'available' | 'busy' | 'offline',
       currentLocation: profile.current_location || '',
       currentJob: profile.current_job || ''
     }));
+    
+    return users;
   } catch (error) {
-    console.error('Error fetching users by role:', error);
+    console.error('Error in getAllUsers:', error);
     return [];
   }
+};
+
+// Mock data for development when no backend is available
+export const getRegisteredUsers = (): User[] => {
+  // Try to get from localStorage first
+  const storedUsers = localStorage.getItem('swiftaid_registered_users');
+  if (storedUsers) {
+    try {
+      const parsedUsers = JSON.parse(storedUsers);
+      return parsedUsers.map((user: any) => ({
+        ...user,
+        // Ensure role is one of the allowed values
+        role: user.role as 'requester' | 'driver' | 'admin',
+        // Ensure status is one of the allowed values
+        status: user.status as 'available' | 'busy' | 'offline'
+      }));
+    } catch (error) {
+      console.error('Error parsing stored users:', error);
+      return [];
+    }
+  }
+  
+  // If no users in localStorage, return an empty array
+  return [];
+};
+
+// For development/demo purposes
+export const saveRegisteredUser = (user: User): void => {
+  const existingUsers = getRegisteredUsers();
+  const updatedUsers = existingUsers.some(u => u.id === user.id)
+    ? existingUsers.map(u => u.id === user.id ? { ...u, ...user } : u)
+    : [...existingUsers, user];
+  
+  localStorage.setItem('swiftaid_registered_users', JSON.stringify(updatedUsers));
 };
