@@ -5,6 +5,7 @@ import { User, AuthContextType } from '../types/auth';
 import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
 import { allPasswords } from '../data/mockUsers';
+import { sendSms, isUserOffline } from '../utils/notificationUtils';
 
 // Initialize the registered users array
 let registeredUsers = initialRegisteredUsers();
@@ -28,14 +29,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const updatedUser = latestRegisteredUsers.find((u: User) => u.id === parsedUser.id);
         
         // Use the latest user data if available, otherwise use the stored user
-        setCurrentUser(updatedUser || parsedUser);
+        const user = updatedUser || parsedUser;
+        
+        // Update last active timestamp
+        user.lastActive = Date.now();
+        setCurrentUser(user);
+        updateUserInStorage(user);
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('swiftaid_user');
       }
     }
     setLoading(false);
+    
+    // Set up activity tracking
+    const activityInterval = setInterval(() => {
+      checkUserActivity();
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(activityInterval);
   }, []);
+
+  // Update user's last active timestamp
+  const checkUserActivity = () => {
+    if (currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        lastActive: Date.now()
+      };
+      setCurrentUser(updatedUser);
+      updateUserInStorage(updatedUser);
+    }
+  };
+
+  // Toggle SMS notifications for current user
+  const toggleSmsNotifications = (enabled: boolean) => {
+    if (!currentUser) return;
+    
+    const updatedUser = {
+      ...currentUser,
+      smsNotifications: enabled
+    };
+    
+    setCurrentUser(updatedUser);
+    updateUserInStorage(updatedUser);
+    
+    toast.success(enabled 
+      ? 'SMS notifications enabled' 
+      : 'SMS notifications disabled');
+  };
+
+  // Send an SMS notification to a specific user
+  const sendSmsNotification = async (userId: string, message: string): Promise<boolean> => {
+    // Get latest registered users
+    const latestRegisteredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+    const user = latestRegisteredUsers.find((u: User) => u.id === userId);
+    
+    if (!user || !user.phone || !user.smsNotifications) {
+      console.log(`Cannot send SMS to user ${userId}: No phone number or notifications disabled`);
+      return false;
+    }
+    
+    const success = await sendSms(user.phone, message);
+    
+    if (success) {
+      toast.success(`SMS notification sent to ${user.name}`);
+    } else {
+      toast.error(`Failed to send SMS to ${user.name}`);
+    }
+    
+    return success;
+  };
 
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
@@ -200,7 +264,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isDriver,
     isRequester,
     updateDriverStatus,
-    updateUserProfile
+    updateUserProfile,
+    sendSmsNotification,
+    toggleSmsNotifications,
+    checkUserActivity
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

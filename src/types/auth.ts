@@ -13,6 +13,8 @@ export interface User {
   currentLocation?: string;
   currentJob?: string;
   username?: string;
+  smsNotifications?: boolean;
+  lastActive?: number; // timestamp of last activity
 }
 
 export interface AuthContextType {
@@ -26,4 +28,7 @@ export interface AuthContextType {
   isRequester: boolean;
   updateDriverStatus: (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => void;
   updateUserProfile: (updates: Partial<User>) => void;
+  sendSmsNotification: (userId: string, message: string) => Promise<boolean>;
+  toggleSmsNotifications: (enabled: boolean) => void;
+  checkUserActivity: () => void;
 }
