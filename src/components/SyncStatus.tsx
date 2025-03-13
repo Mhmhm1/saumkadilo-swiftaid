@@ -10,7 +10,7 @@ const SyncStatus = () => {
 
   return (
     <div className="flex items-center space-x-2">
-      <Badge variant={syncEnabled ? "success" : "secondary"} className="flex items-center gap-1">
+      <Badge variant={syncEnabled ? "default" : "secondary"} className={`flex items-center gap-1 ${syncEnabled ? "bg-green-500 hover:bg-green-600" : ""}`}>
         {syncEnabled ? (
           <>
             <Cloud className="h-3 w-3" />
