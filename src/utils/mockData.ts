@@ -1,5 +1,4 @@
 import { User } from '../types/auth';
-import { updateRequestInFirebase, updateDriverInFirebase } from './firebaseUtils';
 
 export interface EmergencyRequest {
   id: string;
@@ -63,6 +62,7 @@ export interface Driver {
   phone?: string;
 }
 
+// Helper to parse date strings back to Date objects in stored requests
 const parseStoredRequests = (requests: any[]): EmergencyRequest[] => {
   return requests.map(req => ({
     ...req,
@@ -80,6 +80,7 @@ const parseStoredRequests = (requests: any[]): EmergencyRequest[] => {
   }));
 };
 
+// Load persisted requests from localStorage or initialize with empty array
 const loadPersistedRequests = (): EmergencyRequest[] => {
   const storedRequests = localStorage.getItem('swiftaid_emergency_requests');
   if (storedRequests) {
@@ -93,15 +94,15 @@ const loadPersistedRequests = (): EmergencyRequest[] => {
   return [];
 };
 
+// Initialize emergency requests from localStorage
 export const mockRequests: EmergencyRequest[] = loadPersistedRequests();
 
+// Save requests to localStorage
 const saveRequestsToStorage = () => {
   localStorage.setItem('swiftaid_emergency_requests', JSON.stringify(mockRequests));
-  
-  // We don't call Firebase directly here as this would cause too many writes
-  // The periodic sync in AuthContext will handle this
 };
 
+// Load persisted drivers from localStorage or initialize with default
 const loadPersistedDrivers = (): Driver[] => {
   const storedDrivers = localStorage.getItem('swiftaid_drivers');
   if (storedDrivers) {
@@ -115,13 +116,12 @@ const loadPersistedDrivers = (): Driver[] => {
   return getDefaultDrivers();
 };
 
+// Save drivers to localStorage
 const saveDriversToStorage = () => {
   localStorage.setItem('swiftaid_drivers', JSON.stringify(mockDrivers));
-  
-  // We don't call Firebase directly here as this would cause too many writes
-  // The periodic sync in AuthContext will handle this
 };
 
+// Get default drivers if no saved state exists
 const getDefaultDrivers = (): Driver[] => {
   const defaultDrivers: Driver[] = [
     {
@@ -209,6 +209,7 @@ const getDefaultDrivers = (): Driver[] => {
   return defaultDrivers;
 };
 
+// Initialize drivers from localStorage
 export const mockDrivers: Driver[] = loadPersistedDrivers();
 
 export const firstAidTips = [
@@ -324,8 +325,6 @@ export const addEmergencyRequest = (
   mockRequests.unshift(newRequest);
   saveRequestsToStorage();
   
-  updateRequestInFirebase(newRequest).catch(console.error);
-  
   return newRequest;
 };
 
@@ -360,9 +359,6 @@ export const assignDriver = (requestId: string, driverId: string): void => {
     
     saveRequestsToStorage();
     saveDriversToStorage();
-    
-    updateRequestInFirebase(request).catch(console.error);
-    updateDriverInFirebase(driver).catch(console.error);
   }
 };
 
@@ -386,8 +382,6 @@ export const addMessageToRequest = (
     });
     
     saveRequestsToStorage();
-    
-    updateRequestInFirebase(request).catch(console.error);
   }
 };
 
@@ -437,8 +431,6 @@ export const updateRequestStatus = (
           driver.currentAssignment = undefined;
           driver.completedAssignments += 1;
           saveDriversToStorage();
-          
-          updateDriverInFirebase(driver).catch(console.error);
         }
       }
     }
@@ -479,8 +471,6 @@ export const syncDriverWithUser = (driverId: string, updates: Partial<User>): vo
       
       localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
     }
-    
-    updateDriverInFirebase(driver).catch(console.error);
   }
 };
 
@@ -498,8 +488,6 @@ export const addRatingToRequest = (
       timestamp: new Date()
     };
     saveRequestsToStorage();
-    
-    updateRequestInFirebase(request).catch(console.error);
   }
 };
 

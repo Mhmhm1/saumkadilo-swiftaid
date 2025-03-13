@@ -26,6 +26,4 @@ export interface AuthContextType {
   isRequester: boolean;
   updateDriverStatus: (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => void;
   updateUserProfile: (updates: Partial<User>) => void;
-  syncEnabled: boolean;
-  toggleSync: () => Promise<void>;
 }
