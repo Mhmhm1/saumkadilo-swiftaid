@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DriverDashboard from "./pages/DriverDashboard";
 import RequesterDashboard from "./pages/RequesterDashboard";
 import NotFound from "./pages/NotFound";
+import HeaderSync from "./components/HeaderSync";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
+          <HeaderSync />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -10,6 +11,14 @@ import {
   setupDataSync
 } from '../utils/authUtils';
 import { syncDriverWithUser } from '../utils/mockData';
+import {
+  syncLocalToFirebase,
+  syncFirebaseToLocal,
+  firebaseLogin,
+  firebaseRegister,
+  firebaseLogout,
+  updateUserInFirebase
+} from '../utils/firebaseUtils';
 
 // Initialize the registered users array once
 let registeredUsers = initialRegisteredUsers();
@@ -19,6 +28,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [syncEnabled, setSyncEnabled] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Setup cross-device synchronization
@@ -33,6 +43,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const parsedUser = JSON.parse(storedUser);
         console.log('User automatically logged in:', parsedUser.username || parsedUser.email);
         setCurrentUser(parsedUser);
+        
+        // Attempt to sync with Firebase when user is loaded
+        syncLocalToFirebase().then(success => {
+          if (success) {
+            setSyncEnabled(true);
+            toast.success('Data synchronized with cloud');
+          }
+        });
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('swiftaid_user');
@@ -55,6 +73,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [navigate]);
 
+  // Sync with Firebase periodically if sync is enabled
+  useEffect(() => {
+    if (!syncEnabled) return;
+
+    const syncInterval = setInterval(() => {
+      syncLocalToFirebase();
+    }, 60000); // Sync every minute
+
+    return () => clearInterval(syncInterval);
+  }, [syncEnabled]);
+
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
@@ -70,7 +99,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      const user = validateCredentials(usernameOrEmail, password, registeredUsers);
+      let user: User | null = null;
+      
+      // Try local login first
+      user = validateCredentials(usernameOrEmail, password, registeredUsers);
+      
+      if (!user) {
+        try {
+          // If local login fails, try Firebase login
+          const isEmail = usernameOrEmail.includes('@');
+          if (isEmail) {
+            user = await firebaseLogin(usernameOrEmail, password);
+            // If Firebase login succeeds, sync data
+            await syncFirebaseToLocal();
+            setSyncEnabled(true);
+            toast.success('Cloud sync enabled');
+          } else {
+            // Username login is only supported locally
+            toast.error('Invalid username/email or password');
+            setLoading(false);
+            return;
+          }
+        } catch (firebaseError) {
+          console.log("Firebase login failed, continuing with local only");
+        }
+      }
       
       if (user) {
         console.log("Login successful for:", user.username || user.email);
@@ -87,6 +140,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         toast.success(`Welcome back, ${user.name}!`);
+        
+        // Try to sync with Firebase
+        syncLocalToFirebase().then(success => {
+          if (success) {
+            setSyncEnabled(true);
+          }
+        });
       } else {
         console.log("Login failed for:", usernameOrEmail);
         toast.error('Invalid username/email or password');
@@ -118,8 +178,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Register the user with our helper function
-      const newUser = registerUser(name, email, password, phone);
+      let newUser: User;
+      
+      // Try to register with Firebase first
+      try {
+        newUser = await firebaseRegister(email, password, { 
+          name, 
+          username, 
+          role: 'requester' as 'requester' | 'driver' | 'admin',
+          phone
+        });
+        setSyncEnabled(true);
+        toast.success('Cloud sync enabled');
+      } catch (firebaseError) {
+        console.log("Firebase registration failed, continuing with local only:", firebaseError);
+        // If Firebase registration fails, register locally
+        newUser = registerUser(name, email, password, phone);
+      }
       
       // Auto login after registration
       setCurrentUser(newUser);
@@ -127,6 +202,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast.success('Registration successful');
       navigate('/dashboard');
+      
+      // Try to sync with Firebase
+      syncLocalToFirebase();
     } catch (error) {
       console.error('Registration error:', error);
       toast.error('An error occurred during registration');
@@ -149,6 +227,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setCurrentUser(updatedUser);
     updateUserInStorage(updatedUser);
+    
+    // Update in Firebase if sync is enabled
+    if (syncEnabled) {
+      updateUserInFirebase(updatedUser);
+    }
+    
     toast.success(`Status updated to ${status}`);
   };
 
@@ -165,6 +249,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(updatedUser);
     updateUserInStorage(updatedUser);
     
+    // Update in Firebase if sync is enabled
+    if (syncEnabled) {
+      updateUserInFirebase(updatedUser);
+    }
+    
     // If this is a driver, also update the driver data in mockDrivers
     if (currentUser.role === 'driver') {
       syncDriverWithUser(currentUser.id, updates);
@@ -173,11 +262,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Profile updated successfully');
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Try to sync before logout
+    if (syncEnabled) {
+      await syncLocalToFirebase();
+      await firebaseLogout();
+    }
+    
     setCurrentUser(null);
     localStorage.removeItem('swiftaid_user');
+    setSyncEnabled(false);
     navigate('/login');
     toast.success('Logged out successfully');
+  };
+
+  const toggleSync = async () => {
+    if (syncEnabled) {
+      setSyncEnabled(false);
+      toast.info('Cloud sync disabled');
+    } else {
+      const success = await syncLocalToFirebase();
+      if (success) {
+        setSyncEnabled(true);
+        toast.success('Cloud sync enabled');
+      } else {
+        toast.error('Failed to enable cloud sync');
+      }
+    }
   };
 
   const isAdmin = currentUser?.role === 'admin';
@@ -194,7 +305,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isDriver,
     isRequester,
     updateDriverStatus,
-    updateUserProfile
+    updateUserProfile,
+    syncEnabled,
+    toggleSync
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
