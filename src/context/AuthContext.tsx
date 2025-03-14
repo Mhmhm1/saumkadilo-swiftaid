@@ -119,23 +119,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
+      // Determine if input is an email or username
+      const isEmail = usernameOrEmail.includes('@');
+      
+      // If it's not an email, try to find a matching user by username
+      let email = usernameOrEmail;
+      
+      if (!isEmail) {
+        // For demo login buttons, the username might be one of the demo accounts
+        if (usernameOrEmail === 'admin') {
+          email = 'admin@swiftaid.com';
+        } else if (usernameOrEmail.includes('.')) {
+          // For usernames like "kivinga.wambua", append the domain
+          email = `${usernameOrEmail}@swiftaid.com`;
+        } else {
+          // Fallback for any other username format
+          email = `${usernameOrEmail}@example.com`;
+        }
+        
+        console.log(`Login attempt: converted username "${usernameOrEmail}" to email "${email}"`);
+      }
+      
       // Try to sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@example.com`,
+        email: email,
         password,
       });
 
       if (error) {
+        console.error('Login error details:', error);
         throw new Error(error.message);
       }
       
-      // Update last_active timestamp
+      // Update last_active timestamp and show success message
       if (data.user) {
         await supabase.auth.updateUser({
           data: {
             last_active: Date.now()
           }
         });
+        
+        toast({
+          title: "Login Successful",
+          description: "You have been logged in successfully.",
+        });
+        
+        console.log('Login successful:', data.user);
       }
     } catch (error) {
       console.error('Login error:', error);
