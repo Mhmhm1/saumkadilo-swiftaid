@@ -56,7 +56,7 @@ const NotificationSettings: React.FC = () => {
               </p>
             </div>
             <Switch
-              checked={currentUser.smsNotifications || false}
+              checked={currentUser.sms_notifications || false}
               onCheckedChange={handleToggleSms}
             />
           </div>
