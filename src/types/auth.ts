@@ -5,16 +5,18 @@ export interface User {
   email: string;
   role: 'requester' | 'driver' | 'admin';
   phone?: string;
-  driverId?: string;
-  ambulanceId?: string;
-  licenseNumber?: string;
-  photoUrl?: string;
+  driver_id?: string;
+  ambulance_id?: string;
+  license_number?: string;
+  photo_url?: string;
   status?: 'available' | 'busy' | 'offline';
-  currentLocation?: string;
-  currentJob?: string;
+  current_location?: string;
+  current_job?: string;
   username?: string;
-  smsNotifications?: boolean;
-  lastActive?: number; // timestamp of last activity
+  sms_notifications?: boolean;
+  last_active?: number; // timestamp of last activity
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthContextType {
