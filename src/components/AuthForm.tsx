@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -24,11 +25,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   useEffect(() => {
     if (currentUser) {
       if (currentUser.role === 'admin') {
-        navigate('/admin-dashboard');
+        navigate('/admin');
       } else if (currentUser.role === 'driver') {
-        navigate('/driver-dashboard');
+        navigate('/driver');
       } else {
-        navigate('/requester-dashboard');
+        navigate('/dashboard');
       }
     }
   }, [currentUser, navigate]);
