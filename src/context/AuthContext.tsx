@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '../types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { getCamelCaseProperties } from '@/utils/propertyUtils';
 
 // Create context with default values
 const AuthContext = createContext<AuthContextType>({
@@ -231,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           current_location: location || currentUser.current_location,
           current_job: status === 'busy' ? job : null
         };
-        setCurrentUser(updatedUser as User);
+        setCurrentUser(updatedUser);
       }
       
       toast({
@@ -264,7 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...currentUser,
           ...updates
         };
-        setCurrentUser(updatedUser as User);
+        setCurrentUser(updatedUser);
       }
       
       toast({
@@ -312,7 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...currentUser,
           sms_notifications: enabled
         };
-        setCurrentUser(updatedUser as User);
+        setCurrentUser(updatedUser);
       }
       
       toast({

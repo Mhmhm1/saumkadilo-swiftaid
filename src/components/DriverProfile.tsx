@@ -9,9 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/AuthContext';
 import { User, MapPin, Truck, BadgeCheck, UserRound, Camera } from 'lucide-react';
 import { toast } from 'sonner';
+import { getCamelCaseProperties } from '@/utils/propertyUtils';
 
 const DriverProfile = () => {
   const { currentUser, updateDriverStatus, updateUserProfile } = useAuth();
+  const userWithCamelCase = getCamelCaseProperties(currentUser);
   
   const [status, setStatus] = useState<'available' | 'busy' | 'offline'>(currentUser?.status || 'available');
   const [location, setLocation] = useState(currentUser?.current_location || '');

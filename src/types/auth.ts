@@ -17,16 +17,6 @@ export interface User {
   last_active?: number; // timestamp of last activity
   created_at?: string;
   updated_at?: string;
-  
-  // Alias properties for easier access with consistent naming
-  get driverId(): string | undefined { return this.driver_id; }
-  get ambulanceId(): string | undefined { return this.ambulance_id; }
-  get licenseNumber(): string | undefined { return this.license_number; }
-  get photoUrl(): string | undefined { return this.photo_url; }
-  get currentLocation(): string | undefined { return this.current_location; }
-  get currentJob(): string | undefined { return this.current_job; }
-  get smsNotifications(): boolean | undefined { return this.sms_notifications; }
-  get lastActive(): number | undefined { return this.last_active; }
 }
 
 export interface AuthContextType {
