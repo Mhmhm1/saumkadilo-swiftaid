@@ -1,17 +1,35 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Ambulance, Menu, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
+import { toast } from "sonner";
 
 const Header = () => {
   const { currentUser, logout, isAdmin, isDriver } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigate to home page after logout
+      navigate('/');
+      // Close mobile menu if open
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    } catch (error) {
+      console.error('Logout error in Header:', error);
+      // Still navigate to home page even if there was an error
+      navigate('/');
+    }
   };
 
   // Define navigation links based on user role
@@ -78,7 +96,7 @@ const Header = () => {
             {currentUser && (
               <Button
                 variant="ghost"
-                onClick={logout}
+                onClick={handleLogout}
                 className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary"
               >
                 Log out
@@ -121,10 +139,7 @@ const Header = () => {
             {currentUser && (
               <Button
                 variant="ghost"
-                onClick={() => {
-                  logout();
-                  setIsMenuOpen(false);
-                }}
+                onClick={handleLogout}
                 className="justify-start px-2 py-1 h-auto font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 Log out

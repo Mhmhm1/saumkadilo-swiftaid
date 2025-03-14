@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '../types/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -217,18 +216,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Logout function
+  // Logout function - Fixed to properly handle errors and work even without an active session
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // First set the user to null in the local state
       setCurrentUser(null);
+      
+      // Then attempt to sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout API error:', error);
+        // Even with an error, we can consider the logout successful since we've already cleared the local state
+        toast({
+          title: "Logged Out",
+          description: "You have been logged out successfully.",
+        });
+      } else {
+        toast({
+          title: "Logged Out",
+          description: "You have been logged out successfully.",
+        });
+      }
     } catch (error) {
       console.error('Logout error:', error);
+      // Even with an exception, consider the logout successful since we've cleared the local state
       toast({
-        title: "Logout Failed",
-        description: "An error occurred while logging out.",
-        variant: "destructive",
+        title: "Logged Out",
+        description: "You have been logged out successfully.",
       });
     }
   };
