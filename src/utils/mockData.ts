@@ -456,8 +456,8 @@ export const getFirstAidTips = (emergencyType?: string) => {
 export const syncDriverWithUser = (driverId: string, updates: Partial<User>): void => {
   const driver = mockDrivers.find(d => d.id === driverId);
   
-  if (driver && updates.photoUrl) {
-    driver.photoUrl = updates.photoUrl;
+  if (driver && updates.photo_url) {
+    driver.photoUrl = updates.photo_url;
     saveDriversToStorage();
     
     const registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
@@ -466,7 +466,7 @@ export const syncDriverWithUser = (driverId: string, updates: Partial<User>): vo
     if (userIndex !== -1) {
       registeredUsers[userIndex] = {
         ...registeredUsers[userIndex],
-        photoUrl: updates.photoUrl
+        photo_url: updates.photo_url
       };
       
       localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));

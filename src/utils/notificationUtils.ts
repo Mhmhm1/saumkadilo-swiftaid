@@ -28,12 +28,12 @@ export const isUserOffline = (user: User): boolean => {
   if (user.status === 'offline') return true;
   
   // If user hasn't been active in the last 5 minutes (300000 ms)
-  if (user.lastActive) {
+  if (user.last_active) {
     const inactiveThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
-    return Date.now() - user.lastActive > inactiveThreshold;
+    return Date.now() - user.last_active > inactiveThreshold;
   }
   
-  // If no lastActive timestamp exists, consider them online (benefit of the doubt)
+  // If no last_active timestamp exists, consider them online (benefit of the doubt)
   return false;
 };
 
@@ -71,7 +71,7 @@ export const getNotificationRecipients = (
 ): User[] => {
   return users.filter(user => {
     // Skip users without SMS notifications enabled or without a phone number
-    if (!user.smsNotifications || !user.phone) return false;
+    if (!user.sms_notifications || !user.phone) return false;
     
     // Skip excluded users
     if (filters.excludeIds?.includes(user.id)) return false;
