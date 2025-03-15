@@ -1,358 +1,196 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthContextType, User } from '../types/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
+import { User, AuthContextType } from '../types/auth';
+import { initialRegisteredUsers, validateCredentials, updateUserInStorage } from '../utils/authUtils';
+import { syncDriverWithUser } from '../utils/mockData';
+import { allPasswords } from '../data/mockUsers';
 
-// Create context with default values
-const AuthContext = createContext<AuthContextType>({
-  currentUser: null,
-  loading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  isAdmin: false,
-  isDriver: false,
-  isRequester: false,
-  updateDriverStatus: () => {},
-  updateUserProfile: () => {},
-  sendSmsNotification: async () => false,
-  toggleSmsNotifications: () => {},
-  checkUserActivity: () => {},
-});
+// Initialize the registered users array
+let registeredUsers = initialRegisteredUsers();
+
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
 
-  // Derived state
-  const isAdmin = Boolean(currentUser?.role === 'admin');
-  const isDriver = Boolean(currentUser?.role === 'driver');
-  const isRequester = Boolean(currentUser?.role === 'requester');
-
-  // Initialize auth state
   useEffect(() => {
-    const initializeAuth = async () => {
+    // Check if user is already logged in (from localStorage)
+    const storedUser = localStorage.getItem('swiftaid_user');
+    if (storedUser) {
       try {
-        // Check if there's an active session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const parsedUser = JSON.parse(storedUser);
         
-        if (sessionError) {
-          console.error('Error getting session:', sessionError);
-          setLoading(false);
-          return;
-        }
+        // Re-validate user data from the latest registered users
+        const latestRegisteredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+        const updatedUser = latestRegisteredUsers.find((u: User) => u.id === parsedUser.id);
         
-        if (session?.user) {
-          // Fetch user profile from the database
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (userError) {
-            console.error('Error fetching user data:', userError);
-            setLoading(false);
-            return;
-          }
-          
-          setCurrentUser(userData as User);
-        }
+        // Use the latest user data if available, otherwise use the stored user
+        setCurrentUser(updatedUser || parsedUser);
       } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('swiftaid_user');
       }
-    };
-
-    initializeAuth();
-
-    // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
-      
-      if (event === 'SIGNED_IN' && session) {
-        // Fetch user profile after sign in
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (userError) {
-          console.error('Error fetching user data:', userError);
-          return;
-        }
-        
-        setCurrentUser(userData as User);
-      } else if (event === 'SIGNED_OUT') {
-        setCurrentUser(null);
-      }
-    });
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
+    }
+    setLoading(false);
   }, []);
 
-  // Login function
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
-      // Try to sign in with Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@example.com`,
-        password,
-      });
-
-      if (error) {
-        // Try username-based login if email login fails
-        if (!usernameOrEmail.includes('@')) {
-          // Get the user with this username
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('email')
-            .eq('username', usernameOrEmail)
-            .single();
-          
-          if (userError) {
-            throw new Error('Invalid username or password');
-          }
-          
-          // Try again with the email
-          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-            email: userData.email,
-            password,
-          });
-          
-          if (loginError) {
-            throw new Error('Invalid username or password');
-          }
-        } else {
-          throw new Error(error.message);
-        }
-      }
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Update last_active timestamp
-      if (data.user) {
-        await supabase
-          .from('users')
-          .update({ last_active: Date.now() })
-          .eq('id', data.user.id);
+      // Reload the latest registered users
+      registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      
+      console.log("Trying to login with:", usernameOrEmail);
+      console.log("Available users:", registeredUsers.map(u => u.username || u.email));
+      
+      const user = validateCredentials(usernameOrEmail, password, registeredUsers);
+      
+      console.log("Found user:", user);
+      console.log("Password check:", user && (password === password)); // Simplified for logging
+      
+      if (user) {
+        setCurrentUser(user);
+        localStorage.setItem('swiftaid_user', JSON.stringify(user));
+        
+        // Redirect based on role
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else if (user.role === 'driver') {
+          navigate('/driver');
+        } else {
+          navigate('/dashboard');
+        }
+        
+        toast.success(`Welcome back, ${user.name}!`);
+      } else {
+        toast.error('Invalid username/email or password');
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-      throw error;
+      toast.error('An error occurred during login');
     } finally {
       setLoading(false);
     }
   };
 
-  // Register function
   const register = async (name: string, email: string, password: string, phone?: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reload the latest registered users
+      registeredUsers = JSON.parse(localStorage.getItem('swiftaid_registered_users') || '[]');
+      
+      // Generate a username from email
+      const username = email.split('@')[0];
+      
+      // Check if email or username already exists
+      if (registeredUsers.some(u => u.email === email || u.username === username)) {
+        toast.error('Email or username already in use');
+        setLoading(false);
+        return;
+      }
+      
+      // Create new user
+      const newUser: User = {
+        id: `user_${Date.now().toString(36)}`,
+        name,
         email,
-        password,
-        options: {
-          data: {
-            name,
-            role: 'requester',
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Update phone number if provided
-      if (phone && data.user) {
-        await supabase
-          .from('users')
-          .update({ phone })
-          .eq('id', data.user.id);
-      }
-
-      toast({
-        title: "Registration Successful",
-        description: "Your account has been created. You are now logged in.",
-      });
+        username,
+        role: 'requester',
+        phone
+      };
+      
+      // Add to registered users
+      registeredUsers.push(newUser);
+      
+      // Update localStorage with new registered users
+      localStorage.setItem('swiftaid_registered_users', JSON.stringify(registeredUsers));
+      
+      // Also add to mock passwords
+      // Note: In a real app, we would hash passwords and this would be done server-side
+      // This is for demo purposes only
+      const { mockPasswords } = await import('../data/mockUsers');
+      mockPasswords[email] = password;
+      mockPasswords[username] = password;
+      
+      // Create a persistent passwords object in localStorage
+      let storedPasswords = JSON.parse(localStorage.getItem('swiftaid_passwords') || '{}');
+      storedPasswords[email] = password;
+      storedPasswords[username] = password;
+      localStorage.setItem('swiftaid_passwords', JSON.stringify(storedPasswords));
+      
+      // Auto login after registration
+      setCurrentUser(newUser);
+      localStorage.setItem('swiftaid_user', JSON.stringify(newUser));
+      
+      toast.success('Registration successful');
+      navigate('/dashboard');
     } catch (error) {
       console.error('Registration error:', error);
-      toast({
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-      throw error;
+      toast.error('An error occurred during registration');
     } finally {
       setLoading(false);
     }
   };
 
-  // Logout function
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setCurrentUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: "Logout Failed",
-        description: "An error occurred while logging out.",
-        variant: "destructive",
-      });
+  const updateDriverStatus = (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => {
+    if (!currentUser || currentUser.role !== 'driver') {
+      return;
     }
+
+    const updatedUser = {
+      ...currentUser,
+      status,
+      currentLocation: location || currentUser.currentLocation,
+      currentJob: job || currentUser.currentJob
+    };
+
+    setCurrentUser(updatedUser);
+    updateUserInStorage(updatedUser);
+    toast.success(`Status updated to ${status}`);
   };
 
-  // Update driver status
-  const updateDriverStatus = async (status: 'available' | 'busy' | 'offline', location?: string, job?: string) => {
-    if (!currentUser) return;
+  const updateUserProfile = (updates: Partial<User>) => {
+    if (!currentUser) {
+      return;
+    }
+
+    const updatedUser = {
+      ...currentUser,
+      ...updates
+    };
+
+    setCurrentUser(updatedUser);
+    updateUserInStorage(updatedUser);
     
-    try {
-      const updates: {
-        status: 'available' | 'busy' | 'offline';
-        current_location?: string;
-        current_job?: string;
-      } = { status };
-      
-      if (location) updates.current_location = location;
-      if (status === 'busy' && job) updates.current_job = job;
-      if (status !== 'busy') updates.current_job = null;
-      
-      const { data, error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', currentUser.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      setCurrentUser(prev => prev ? { ...prev, ...data } as User : null);
-      
-      toast({
-        title: "Status Updated",
-        description: `Your status is now set to ${status}`,
-      });
-    } catch (error) {
-      console.error('Error updating driver status:', error);
-      toast({
-        title: "Status Update Failed",
-        description: "Failed to update your status.",
-        variant: "destructive",
-      });
+    // If this is a driver, also update the driver data in mockDrivers
+    if (currentUser.role === 'driver') {
+      syncDriverWithUser(currentUser.id, updates);
     }
-  };
-
-  // Update user profile
-  const updateUserProfile = async (updates: Partial<User>) => {
-    if (!currentUser) return;
     
-    try {
-      // Convert snake_case keys for Supabase
-      const dbUpdates: Record<string, any> = {};
-      Object.entries(updates).forEach(([key, value]) => {
-        // Convert camelCase to snake_case
-        const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-        dbUpdates[snakeKey] = value;
-      });
-      
-      const { data, error } = await supabase
-        .from('users')
-        .update(dbUpdates)
-        .eq('id', currentUser.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      // Update local state
-      setCurrentUser(prev => prev ? { ...prev, ...data } as User : null);
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Profile Update Failed",
-        description: "Failed to update your profile.",
-        variant: "destructive",
-      });
-    }
+    toast.success('Profile updated successfully');
   };
 
-  // Send SMS notification
-  const sendSmsNotification = async (userId: string, message: string): Promise<boolean> => {
-    try {
-      // Here you would integrate with an SMS service
-      // For now, we'll simulate it with a console log
-      console.log(`Sending SMS to user ${userId}: ${message}`);
-      return true;
-    } catch (error) {
-      console.error('Error sending SMS:', error);
-      return false;
-    }
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('swiftaid_user');
+    navigate('/login');
+    toast.success('Logged out successfully');
   };
 
-  // Toggle SMS notifications
-  const toggleSmsNotifications = async (enabled: boolean) => {
-    if (!currentUser) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .update({ sms_notifications: enabled })
-        .eq('id', currentUser.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      setCurrentUser(prev => prev ? { ...prev, ...data } as User : null);
-      
-      toast({
-        title: `SMS Notifications ${enabled ? 'Enabled' : 'Disabled'}`,
-        description: `You will ${enabled ? 'now' : 'no longer'} receive SMS notifications.`,
-      });
-    } catch (error) {
-      console.error('Error toggling SMS notifications:', error);
-      toast({
-        title: "Failed to Update Notifications",
-        description: "An error occurred while updating your notification preferences.",
-        variant: "destructive",
-      });
-    }
-  };
+  const isAdmin = currentUser?.role === 'admin';
+  const isDriver = currentUser?.role === 'driver';
+  const isRequester = currentUser?.role === 'requester';
 
-  // Check user activity
-  const checkUserActivity = async () => {
-    if (!currentUser) return;
-    
-    try {
-      await supabase
-        .from('users')
-        .update({ last_active: Date.now() })
-        .eq('id', currentUser.id);
-    } catch (error) {
-      console.error('Error updating last active timestamp:', error);
-    }
-  };
-
-  // Context value
-  const contextValue: AuthContextType = {
+  const value = {
     currentUser,
     loading,
     login,
@@ -362,17 +200,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isDriver,
     isRequester,
     updateDriverStatus,
-    updateUserProfile,
-    sendSmsNotification,
-    toggleSmsNotifications,
-    checkUserActivity,
+    updateUserProfile
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
