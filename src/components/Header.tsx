@@ -5,6 +5,7 @@ import { Ambulance, Menu, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
 import { toast } from "sonner";
+import NotificationCenter from './NotificationCenter';
 
 const Header = () => {
   const { currentUser, logout, isAdmin, isDriver } = useAuth();
@@ -94,18 +95,22 @@ const Header = () => {
             ))}
             
             {currentUser && (
-              <Button
-                variant="ghost"
-                onClick={handleLogout}
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary"
-              >
-                Log out
-              </Button>
+              <>
+                <NotificationCenter />
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary"
+                >
+                  Log out
+                </Button>
+              </>
             )}
           </nav>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center">
+            {currentUser && <NotificationCenter />}
             <Button variant="ghost" size="icon" onClick={toggleMenu} aria-label="Toggle menu">
               {isMenuOpen ? (
                 <X className="h-6 w-6" />

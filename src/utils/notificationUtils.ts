@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { User } from '../types/auth';
+import { supabase } from "@/integrations/supabase/client";
 
 // In a real-world scenario, this would connect to an SMS gateway API
 // For demo purposes, we'll simulate the SMS sending and log to console
@@ -19,6 +20,50 @@ export const sendSms = async (phoneNumber: string, message: string): Promise<boo
   } else {
     console.error('Failed to send SMS');
     return false;
+  }
+};
+
+// Show a toast notification and also send SMS if the user has it enabled
+export const sendNotification = async (
+  userId: string,
+  title: string, 
+  message: string, 
+  type: 'success' | 'error' | 'info' | 'warning' = 'info'
+) => {
+  // Show toast notification in the current browser
+  toast[type](title, { description: message });
+  
+  // Also add the notification to Supabase so other devices can see it
+  try {
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      title,
+      message,
+      type,
+      read: false
+    });
+    
+    console.log(`Notification stored in database for user ${userId}`);
+  } catch (error) {
+    console.error('Error storing notification:', error);
+  }
+  
+  // Try to send SMS if the user has enabled it
+  try {
+    // Get the user's phone number and SMS preferences
+    const { data: userData, error } = await supabase
+      .from('profiles')
+      .select('phone, sms_notifications')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    if (userData?.sms_notifications && userData?.phone) {
+      await sendSms(userData.phone, `${title}: ${message}`);
+    }
+  } catch (error) {
+    console.error('Error sending SMS notification:', error);
   }
 };
 
@@ -84,4 +129,33 @@ export const getNotificationRecipients = (
     
     return true;
   });
+};
+
+// Function to listen for real-time notifications
+export const setupNotificationListener = (userId: string) => {
+  // Setup Supabase realtime subscription for notifications
+  const notificationChannel = supabase
+    .channel('notifications-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      },
+      (payload) => {
+        const notification = payload.new;
+        // Show the notification as a toast
+        toast[notification.type || 'info'](notification.title, {
+          description: notification.message
+        });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    // Cleanup function to remove channel subscription
+    supabase.removeChannel(notificationChannel);
+  };
 };
