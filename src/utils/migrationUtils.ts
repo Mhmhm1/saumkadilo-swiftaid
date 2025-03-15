@@ -61,20 +61,25 @@ export const migrateUsersToSupabase = async () => {
       
       // Update the user profile with additional information
       if (authData.user) {
-        await supabase.auth.updateUser({
-          data: {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
             phone: user.phone,
-            driver_id: user.driver_id,
-            ambulance_id: user.ambulance_id,
-            license_number: user.license_number,
-            photo_url: user.photo_url,
+            driver_id: user.driverId,
+            ambulance_id: user.ambulanceId,
+            license_number: user.licenseNumber,
+            photo_url: user.photoUrl,
             status: user.status || 'available',
-            current_location: user.current_location,
-            current_job: user.current_job,
-            sms_notifications: user.sms_notifications || false,
-            last_active: user.last_active || Date.now()
-          }
-        });
+            current_location: user.currentLocation,
+            current_job: user.currentJob,
+            sms_notifications: user.smsNotifications || false,
+            last_active: user.lastActive || Date.now()
+          })
+          .eq('id', authData.user.id);
+        
+        if (updateError) {
+          console.error(`Error updating user profile for ${user.email}:`, updateError);
+        }
       }
     }
     

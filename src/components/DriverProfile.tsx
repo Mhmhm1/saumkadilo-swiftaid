@@ -9,15 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/AuthContext';
 import { User, MapPin, Truck, BadgeCheck, UserRound, Camera } from 'lucide-react';
 import { toast } from 'sonner';
-import { getCamelCaseProperties } from '@/utils/propertyUtils';
 
 const DriverProfile = () => {
   const { currentUser, updateDriverStatus, updateUserProfile } = useAuth();
-  const userWithCamelCase = getCamelCaseProperties(currentUser);
   
   const [status, setStatus] = useState<'available' | 'busy' | 'offline'>(currentUser?.status || 'available');
-  const [location, setLocation] = useState(currentUser?.current_location || '');
-  const [currentJob, setCurrentJob] = useState(currentUser?.current_job || '');
+  const [location, setLocation] = useState(currentUser?.currentLocation || '');
+  const [currentJob, setCurrentJob] = useState(currentUser?.currentJob || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   if (!currentUser) return null;
@@ -52,7 +50,7 @@ const DriverProfile = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const photoUrl = e.target?.result as string;
-      updateUserProfile({ photo_url: photoUrl });
+      updateUserProfile({ photoUrl });
     };
     reader.readAsDataURL(file);
   };
@@ -69,7 +67,7 @@ const DriverProfile = () => {
         <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
           <div className="relative">
             <Avatar className="h-24 w-24 cursor-pointer" onClick={handleProfilePictureClick}>
-              <AvatarImage src={currentUser.photo_url} alt={currentUser.name} />
+              <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
               <AvatarFallback className="text-2xl bg-primary/10">
                 <UserRound className="h-10 w-10 text-primary" />
               </AvatarFallback>
@@ -103,19 +101,19 @@ const DriverProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div className="flex items-center text-sm text-muted-foreground">
                 <BadgeCheck className="mr-1 h-4 w-4" />
-                Driver ID: {currentUser.driver_id}
+                Driver ID: {currentUser.driverId}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Truck className="mr-1 h-4 w-4" />
-                Ambulance: {currentUser.ambulance_id}
+                Ambulance: {currentUser.ambulanceId}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <User className="mr-1 h-4 w-4" />
-                License: {currentUser.license_number}
+                License: {currentUser.licenseNumber}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <MapPin className="mr-1 h-4 w-4" />
-                {currentUser.current_location || 'No location set'}
+                {currentUser.currentLocation || 'No location set'}
               </div>
             </div>
           </div>

@@ -9,5 +9,5 @@ export const adminUser: User = {
   username: 'admin',
   role: 'admin',
   phone: '123-456-7890',
-  photo_url: 'https://randomuser.me/api/portraits/men/82.jpg'
+  photoUrl: 'https://randomuser.me/api/portraits/men/82.jpg'
 };

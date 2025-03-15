@@ -1,3 +1,4 @@
+
 import { User } from '../types/auth';
 
 // Real driver profiles with African names
@@ -9,12 +10,12 @@ export const realDriverProfiles: User[] = [
     username: 'kivinga.wambua',
     role: 'driver',
     phone: '123-456-7891',
-    driver_id: 'DRV001',
-    ambulance_id: 'AMB001',
-    license_number: 'LIC001',
+    driverId: 'DRV001',
+    ambulanceId: 'AMB001',
+    licenseNumber: 'LIC001',
     status: 'available',
-    current_location: 'Downtown Medical Center',
-    photo_url: 'https://randomuser.me/api/portraits/men/74.jpg'
+    currentLocation: 'Downtown Medical Center',
+    photoUrl: 'https://randomuser.me/api/portraits/men/74.jpg'
   },
   {
     id: '3',
@@ -23,12 +24,12 @@ export const realDriverProfiles: User[] = [
     username: 'elizabeth.kadzo',
     role: 'driver',
     phone: '123-456-7892',
-    driver_id: 'DRV002',
-    ambulance_id: 'AMB002',
-    license_number: 'LIC002',
+    driverId: 'DRV002',
+    ambulanceId: 'AMB002',
+    licenseNumber: 'LIC002',
     status: 'available',
-    current_location: 'North District Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/women/74.jpg'
+    currentLocation: 'North District Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/women/74.jpg'
   },
   {
     id: '4',
@@ -37,13 +38,13 @@ export const realDriverProfiles: User[] = [
     username: 'cyrus.wambua',
     role: 'driver',
     phone: '123-456-7893',
-    driver_id: 'DRV003',
-    ambulance_id: 'AMB003',
-    license_number: 'LIC003',
+    driverId: 'DRV003',
+    ambulanceId: 'AMB003',
+    licenseNumber: 'LIC003',
     status: 'busy',
-    current_location: 'Central Hospital',
-    current_job: 'Transporting patient to hospital',
-    photo_url: 'https://randomuser.me/api/portraits/men/75.jpg'
+    currentLocation: 'Central Hospital',
+    currentJob: 'Transporting patient to hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/men/75.jpg'
   },
   {
     id: '5',
@@ -52,12 +53,12 @@ export const realDriverProfiles: User[] = [
     username: 'dunson.mwandwa',
     role: 'driver',
     phone: '123-456-7894',
-    driver_id: 'DRV004',
-    ambulance_id: 'AMB004',
-    license_number: 'LIC004',
+    driverId: 'DRV004',
+    ambulanceId: 'AMB004',
+    licenseNumber: 'LIC004',
     status: 'offline',
-    current_location: 'Off duty',
-    photo_url: 'https://randomuser.me/api/portraits/men/76.jpg'
+    currentLocation: 'Off duty',
+    photoUrl: 'https://randomuser.me/api/portraits/men/76.jpg'
   },
   {
     id: '6',
@@ -66,12 +67,12 @@ export const realDriverProfiles: User[] = [
     username: 'masha.ngovi',
     role: 'driver',
     phone: '123-456-7895',
-    driver_id: 'DRV005',
-    ambulance_id: 'AMB005',
-    license_number: 'LIC005',
+    driverId: 'DRV005',
+    ambulanceId: 'AMB005',
+    licenseNumber: 'LIC005',
     status: 'available',
-    current_location: 'East Wing Medical Center',
-    photo_url: 'https://randomuser.me/api/portraits/women/75.jpg'
+    currentLocation: 'East Wing Medical Center',
+    photoUrl: 'https://randomuser.me/api/portraits/women/75.jpg'
   },
   {
     id: '7',
@@ -80,12 +81,12 @@ export const realDriverProfiles: User[] = [
     username: 'godfrey.mambo',
     role: 'driver',
     phone: '123-456-7896',
-    driver_id: 'DRV006',
-    ambulance_id: 'AMB006',
-    license_number: 'LIC006',
+    driverId: 'DRV006',
+    ambulanceId: 'AMB006',
+    licenseNumber: 'LIC006',
     status: 'available',
-    current_location: 'South Community Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/men/77.jpg'
+    currentLocation: 'South Community Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/men/77.jpg'
   },
   {
     id: '8',
@@ -94,13 +95,13 @@ export const realDriverProfiles: User[] = [
     username: 'firdaus.said',
     role: 'driver',
     phone: '123-456-7897',
-    driver_id: 'DRV007',
-    ambulance_id: 'AMB007',
-    license_number: 'LIC007',
+    driverId: 'DRV007',
+    ambulanceId: 'AMB007',
+    licenseNumber: 'LIC007',
     status: 'busy',
-    current_location: 'Central Hospital',
-    current_job: 'Emergency response to traffic accident',
-    photo_url: 'https://randomuser.me/api/portraits/women/76.jpg'
+    currentLocation: 'Central Hospital',
+    currentJob: 'Emergency response to traffic accident',
+    photoUrl: 'https://randomuser.me/api/portraits/women/76.jpg'
   },
   {
     id: '9',
@@ -109,12 +110,12 @@ export const realDriverProfiles: User[] = [
     username: 'saida.seif',
     role: 'driver',
     phone: '123-456-7898',
-    driver_id: 'DRV008',
-    ambulance_id: 'AMB008',
-    license_number: 'LIC008',
+    driverId: 'DRV008',
+    ambulanceId: 'AMB008',
+    licenseNumber: 'LIC008',
     status: 'available',
-    current_location: 'Riverside Medical Center',
-    photo_url: 'https://randomuser.me/api/portraits/women/77.jpg'
+    currentLocation: 'Riverside Medical Center',
+    photoUrl: 'https://randomuser.me/api/portraits/women/77.jpg'
   },
   {
     id: '10',
@@ -123,12 +124,12 @@ export const realDriverProfiles: User[] = [
     username: 'anna.stephen',
     role: 'driver',
     phone: '123-456-7899',
-    driver_id: 'DRV009',
-    ambulance_id: 'AMB009',
-    license_number: 'LIC009',
+    driverId: 'DRV009',
+    ambulanceId: 'AMB009',
+    licenseNumber: 'LIC009',
     status: 'offline',
-    current_location: 'Off duty',
-    photo_url: 'https://randomuser.me/api/portraits/women/78.jpg'
+    currentLocation: 'Off duty',
+    photoUrl: 'https://randomuser.me/api/portraits/women/78.jpg'
   },
   {
     id: '11',
@@ -137,12 +138,12 @@ export const realDriverProfiles: User[] = [
     username: 'laura.achieng',
     role: 'driver',
     phone: '123-456-7900',
-    driver_id: 'DRV010',
-    ambulance_id: 'AMB010',
-    license_number: 'LIC010',
+    driverId: 'DRV010',
+    ambulanceId: 'AMB010',
+    licenseNumber: 'LIC010',
     status: 'available',
-    current_location: 'West County Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/women/79.jpg'
+    currentLocation: 'West County Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/women/79.jpg'
   },
   {
     id: '12',
@@ -151,13 +152,13 @@ export const realDriverProfiles: User[] = [
     username: 'moses.muyoga',
     role: 'driver',
     phone: '123-456-7901',
-    driver_id: 'DRV011',
-    ambulance_id: 'AMB011',
-    license_number: 'LIC011',
+    driverId: 'DRV011',
+    ambulanceId: 'AMB011',
+    licenseNumber: 'LIC011',
     status: 'busy',
-    current_location: 'Downtown Area',
-    current_job: 'Patient transfer to specialized facility',
-    photo_url: 'https://randomuser.me/api/portraits/men/78.jpg'
+    currentLocation: 'Downtown Area',
+    currentJob: 'Patient transfer to specialized facility',
+    photoUrl: 'https://randomuser.me/api/portraits/men/78.jpg'
   },
   {
     id: '13',
@@ -166,12 +167,12 @@ export const realDriverProfiles: User[] = [
     username: 'obare.mercy',
     role: 'driver',
     phone: '123-456-7902',
-    driver_id: 'DRV012',
-    ambulance_id: 'AMB012',
-    license_number: 'LIC012',
+    driverId: 'DRV012',
+    ambulanceId: 'AMB012',
+    licenseNumber: 'LIC012',
     status: 'available',
-    current_location: 'North District Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/women/80.jpg'
+    currentLocation: 'North District Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/women/80.jpg'
   },
   {
     id: '14',
@@ -180,12 +181,12 @@ export const realDriverProfiles: User[] = [
     username: 'salim.bizi',
     role: 'driver',
     phone: '123-456-7903',
-    driver_id: 'DRV013',
-    ambulance_id: 'AMB013',
-    license_number: 'LIC013',
+    driverId: 'DRV013',
+    ambulanceId: 'AMB013',
+    licenseNumber: 'LIC013',
     status: 'offline',
-    current_location: 'Off duty',
-    photo_url: 'https://randomuser.me/api/portraits/men/79.jpg'
+    currentLocation: 'Off duty',
+    photoUrl: 'https://randomuser.me/api/portraits/men/79.jpg'
   },
   {
     id: '15',
@@ -194,12 +195,12 @@ export const realDriverProfiles: User[] = [
     username: 'reagan.mutua',
     role: 'driver',
     phone: '123-456-7904',
-    driver_id: 'DRV014',
-    ambulance_id: 'AMB014',
-    license_number: 'LIC014',
+    driverId: 'DRV014',
+    ambulanceId: 'AMB014',
+    licenseNumber: 'LIC014',
     status: 'available',
-    current_location: 'Central Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/men/80.jpg'
+    currentLocation: 'Central Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/men/80.jpg'
   },
   {
     id: '16',
@@ -208,13 +209,13 @@ export const realDriverProfiles: User[] = [
     username: 'enly.masinde',
     role: 'driver',
     phone: '123-456-7905',
-    driver_id: 'DRV015',
-    ambulance_id: 'AMB015',
-    license_number: 'LIC015',
+    driverId: 'DRV015',
+    ambulanceId: 'AMB015',
+    licenseNumber: 'LIC015',
     status: 'busy',
-    current_location: 'Highway Intersection',
-    current_job: 'Emergency medical response',
-    photo_url: 'https://randomuser.me/api/portraits/women/81.jpg'
+    currentLocation: 'Highway Intersection',
+    currentJob: 'Emergency medical response',
+    photoUrl: 'https://randomuser.me/api/portraits/women/81.jpg'
   },
   {
     id: '17',
@@ -223,12 +224,12 @@ export const realDriverProfiles: User[] = [
     username: 'kenya.nassir',
     role: 'driver',
     phone: '123-456-7906',
-    driver_id: 'DRV016',
-    ambulance_id: 'AMB016',
-    license_number: 'LIC016',
+    driverId: 'DRV016',
+    ambulanceId: 'AMB016',
+    licenseNumber: 'LIC016',
     status: 'available',
-    current_location: 'South Community Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/women/82.jpg'
+    currentLocation: 'South Community Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/women/82.jpg'
   },
   {
     id: '18',
@@ -237,12 +238,12 @@ export const realDriverProfiles: User[] = [
     username: 'said.swaleh',
     role: 'driver',
     phone: '123-456-7907',
-    driver_id: 'DRV017',
-    ambulance_id: 'AMB017',
-    license_number: 'LIC017',
+    driverId: 'DRV017',
+    ambulanceId: 'AMB017',
+    licenseNumber: 'LIC017',
     status: 'offline',
-    current_location: 'Off duty',
-    photo_url: 'https://randomuser.me/api/portraits/men/81.jpg'
+    currentLocation: 'Off duty',
+    photoUrl: 'https://randomuser.me/api/portraits/men/81.jpg'
   },
   {
     id: '19',
@@ -251,12 +252,12 @@ export const realDriverProfiles: User[] = [
     username: 'tabitha.ndumi',
     role: 'driver',
     phone: '123-456-7908',
-    driver_id: 'DRV018',
-    ambulance_id: 'AMB018',
-    license_number: 'LIC018',
+    driverId: 'DRV018',
+    ambulanceId: 'AMB018',
+    licenseNumber: 'LIC018',
     status: 'available',
-    current_location: 'Riverside Medical Center',
-    photo_url: 'https://randomuser.me/api/portraits/women/83.jpg'
+    currentLocation: 'Riverside Medical Center',
+    photoUrl: 'https://randomuser.me/api/portraits/women/83.jpg'
   },
   {
     id: '20',
@@ -265,13 +266,13 @@ export const realDriverProfiles: User[] = [
     username: 'alice.matano',
     role: 'driver',
     phone: '123-456-7909',
-    driver_id: 'DRV019',
-    ambulance_id: 'AMB019',
-    license_number: 'LIC019',
+    driverId: 'DRV019',
+    ambulanceId: 'AMB019',
+    licenseNumber: 'LIC019',
     status: 'busy',
-    current_location: 'Downtown Area',
-    current_job: 'Patient transfer to specialized facility',
-    photo_url: 'https://randomuser.me/api/portraits/women/84.jpg'
+    currentLocation: 'Downtown Area',
+    currentJob: 'Patient transfer to specialized facility',
+    photoUrl: 'https://randomuser.me/api/portraits/women/84.jpg'
   },
   {
     id: '21',
@@ -280,11 +281,11 @@ export const realDriverProfiles: User[] = [
     username: 'mary.shirleen',
     role: 'driver',
     phone: '123-456-7910',
-    driver_id: 'DRV020',
-    ambulance_id: 'AMB020',
-    license_number: 'LIC020',
+    driverId: 'DRV020',
+    ambulanceId: 'AMB020',
+    licenseNumber: 'LIC020',
     status: 'available',
-    current_location: 'West County Hospital',
-    photo_url: 'https://randomuser.me/api/portraits/women/85.jpg'
+    currentLocation: 'West County Hospital',
+    photoUrl: 'https://randomuser.me/api/portraits/women/85.jpg'
   }
 ];

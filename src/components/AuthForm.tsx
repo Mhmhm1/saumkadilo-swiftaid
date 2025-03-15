@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,40 +18,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, register, loading, currentUser } = useAuth();
+  const { login, register, loading } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (currentUser) {
-      if (currentUser.role === 'admin') {
-        navigate('/admin');
-      } else if (currentUser.role === 'driver') {
-        navigate('/driver');
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  }, [currentUser, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    try {
-      if (mode === 'login') {
-        await login(email, password);
-      } else {
-        await register(name, email, password, phone);
-      }
-    } catch (error) {
-      console.error("Auth error:", error);
-    } finally {
-      setIsSubmitting(false);
+    if (mode === 'login') {
+      await login(email, password);
+    } else {
+      await register(name, email, password, phone);
     }
   };
-
-  const isLoading = loading || isSubmitting;
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -134,8 +112,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {mode === 'login' ? 'Logging in...' : 'Creating account...'}

@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '../types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { getCamelCaseProperties } from '@/utils/propertyUtils';
 
 // Create context with default values
 const AuthContext = createContext<AuthContextType>({
@@ -45,28 +44,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (session?.user) {
-          // Get user data from the session
-          const userData = {
-            id: session.user.id,
-            name: session.user.user_metadata.name,
-            email: session.user.email || '',
-            role: session.user.user_metadata.role || 'requester',
-            phone: session.user.user_metadata.phone,
-            driver_id: session.user.user_metadata.driver_id,
-            ambulance_id: session.user.user_metadata.ambulance_id,
-            license_number: session.user.user_metadata.license_number,
-            photo_url: session.user.user_metadata.photo_url,
-            status: session.user.user_metadata.status,
-            current_location: session.user.user_metadata.current_location,
-            current_job: session.user.user_metadata.current_job,
-            username: session.user.user_metadata.username,
-            sms_notifications: session.user.user_metadata.sms_notifications,
-            last_active: session.user.user_metadata.last_active,
-            created_at: session.user.created_at,
-            updated_at: session.user.updated_at
-          } as User;
+          // Fetch user profile from the database
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
           
-          setCurrentUser(userData);
+          if (userError) {
+            console.error('Error fetching user data:', userError);
+            setLoading(false);
+            return;
+          }
+          
+          setCurrentUser(userData as User);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -82,28 +73,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Auth state changed:', event);
       
       if (event === 'SIGNED_IN' && session) {
-        // Get user data from the session
-        const userData = {
-          id: session.user.id,
-          name: session.user.user_metadata.name,
-          email: session.user.email || '',
-          role: session.user.user_metadata.role || 'requester',
-          phone: session.user.user_metadata.phone,
-          driver_id: session.user.user_metadata.driver_id,
-          ambulance_id: session.user.user_metadata.ambulance_id,
-          license_number: session.user.user_metadata.license_number,
-          photo_url: session.user.user_metadata.photo_url,
-          status: session.user.user_metadata.status,
-          current_location: session.user.user_metadata.current_location,
-          current_job: session.user.user_metadata.current_job,
-          username: session.user.user_metadata.username,
-          sms_notifications: session.user.user_metadata.sms_notifications,
-          last_active: session.user.user_metadata.last_active,
-          created_at: session.user.created_at,
-          updated_at: session.user.updated_at
-        } as User;
+        // Fetch user profile after sign in
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
         
-        setCurrentUser(userData);
+        if (userError) {
+          console.error('Error fetching user data:', userError);
+          return;
+        }
+        
+        setCurrentUser(userData as User);
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
       }
@@ -119,52 +101,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (usernameOrEmail: string, password: string) => {
     setLoading(true);
     try {
-      // Determine if input is an email or username
-      const isEmail = usernameOrEmail.includes('@');
-      
-      // If it's not an email, try to find a matching user by username
-      let email = usernameOrEmail;
-      
-      if (!isEmail) {
-        // For demo login buttons, the username might be one of the demo accounts
-        if (usernameOrEmail === 'admin') {
-          email = 'admin@swiftaid.com';
-        } else if (usernameOrEmail.includes('.')) {
-          // For usernames like "kivinga.wambua", append the domain
-          email = `${usernameOrEmail}@swiftaid.com`;
-        } else {
-          // Fallback for any other username format
-          email = `${usernameOrEmail}@example.com`;
-        }
-        
-        console.log(`Login attempt: converted username "${usernameOrEmail}" to email "${email}"`);
-      }
-      
       // Try to sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
+        email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@example.com`,
         password,
       });
 
       if (error) {
-        console.error('Login error details:', error);
-        throw new Error(error.message);
+        // Try username-based login if email login fails
+        if (!usernameOrEmail.includes('@')) {
+          // Get the user with this username
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('email')
+            .eq('username', usernameOrEmail)
+            .single();
+          
+          if (userError) {
+            throw new Error('Invalid username or password');
+          }
+          
+          // Try again with the email
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+            email: userData.email,
+            password,
+          });
+          
+          if (loginError) {
+            throw new Error('Invalid username or password');
+          }
+        } else {
+          throw new Error(error.message);
+        }
       }
       
-      // Update last_active timestamp and show success message
+      // Update last_active timestamp
       if (data.user) {
-        await supabase.auth.updateUser({
-          data: {
-            last_active: Date.now()
-          }
-        });
-        
-        toast({
-          title: "Login Successful",
-          description: "You have been logged in successfully.",
-        });
-        
-        console.log('Login successful:', data.user);
+        await supabase
+          .from('users')
+          .update({ last_active: Date.now() })
+          .eq('id', data.user.id);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -190,14 +166,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             name,
             role: 'requester',
-            phone,
-            last_active: Date.now()
-          }
-        }
+          },
+        },
       });
 
       if (error) {
         throw new Error(error.message);
+      }
+
+      // Update phone number if provided
+      if (phone && data.user) {
+        await supabase
+          .from('users')
+          .update({ phone })
+          .eq('id', data.user.id);
       }
 
       toast({
@@ -241,28 +223,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updates: {
         status: 'available' | 'busy' | 'offline';
         current_location?: string;
-        current_job?: string | null;
+        current_job?: string;
       } = { status };
       
       if (location) updates.current_location = location;
       if (status === 'busy' && job) updates.current_job = job;
       if (status !== 'busy') updates.current_job = null;
       
-      const { data, error } = await supabase.auth.updateUser({
-        data: updates
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', currentUser.id)
+        .select()
+        .single();
       
       if (error) throw error;
       
-      if (data.user) {
-        const updatedUser = {
-          ...currentUser,
-          status: status,
-          current_location: location || currentUser.current_location,
-          current_job: status === 'busy' ? job : null
-        };
-        setCurrentUser(updatedUser);
-      }
+      setCurrentUser(prev => prev ? { ...prev, ...data } as User : null);
       
       toast({
         title: "Status Updated",
@@ -283,19 +260,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!currentUser) return;
     
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: updates
+      // Convert snake_case keys for Supabase
+      const dbUpdates: Record<string, any> = {};
+      Object.entries(updates).forEach(([key, value]) => {
+        // Convert camelCase to snake_case
+        const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+        dbUpdates[snakeKey] = value;
       });
+      
+      const { data, error } = await supabase
+        .from('users')
+        .update(dbUpdates)
+        .eq('id', currentUser.id)
+        .select()
+        .single();
       
       if (error) throw error;
       
-      if (data.user) {
-        const updatedUser = {
-          ...currentUser,
-          ...updates
-        };
-        setCurrentUser(updatedUser);
-      }
+      // Update local state
+      setCurrentUser(prev => prev ? { ...prev, ...data } as User : null);
       
       toast({
         title: "Profile Updated",
@@ -329,21 +312,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!currentUser) return;
     
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        data: {
-          sms_notifications: enabled
-        }
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .update({ sms_notifications: enabled })
+        .eq('id', currentUser.id)
+        .select()
+        .single();
       
       if (error) throw error;
       
-      if (data.user) {
-        const updatedUser = {
-          ...currentUser,
-          sms_notifications: enabled
-        };
-        setCurrentUser(updatedUser);
-      }
+      setCurrentUser(prev => prev ? { ...prev, ...data } as User : null);
       
       toast({
         title: `SMS Notifications ${enabled ? 'Enabled' : 'Disabled'}`,
@@ -364,11 +342,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!currentUser) return;
     
     try {
-      await supabase.auth.updateUser({
-        data: {
-          last_active: Date.now()
-        }
-      });
+      await supabase
+        .from('users')
+        .update({ last_active: Date.now() })
+        .eq('id', currentUser.id);
     } catch (error) {
       console.error('Error updating last active timestamp:', error);
     }

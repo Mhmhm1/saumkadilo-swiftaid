@@ -31,10 +31,6 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/driver" element={<DriverDashboard />} />
             <Route path="/notifications" element={<NotificationSettings />} />
-            {/* Legacy route paths for backward compatibility */}
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/driver-dashboard" element={<DriverDashboard />} />
-            <Route path="/requester-dashboard" element={<RequesterDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
