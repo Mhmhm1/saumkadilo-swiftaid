@@ -1,19 +1,12 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import Header from '@/components/Header';
 import Dashboard from '@/components/Dashboard';
 import { useAuth } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { mockRequests } from '@/utils/mockData';
 
 const AdminDashboard = () => {
   const { currentUser, isAdmin } = useAuth();
-  
-  useEffect(() => {
-    // Log the number of requests to help debug
-    console.log('Total mock requests available:', mockRequests.length);
-    console.log('Pending requests:', mockRequests.filter(req => req.status === 'pending').length);
-  }, []);
   
   // Redirect if not admin
   if (!currentUser || !isAdmin) {

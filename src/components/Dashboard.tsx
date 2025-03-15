@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,29 +61,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
   const [messageDialogOpen, setMessageDialogOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   
-  useEffect(() => {
-    // Log the current state to help debug
-    console.log('Dashboard component loaded');
-    console.log('User role:', userRole);
-    console.log('User ID:', userId);
-    console.log('Total requests available:', mockRequests.length);
-    
-    // Generate a sample emergency request if none exist for testing
-    if (mockRequests.length === 0) {
-      console.log('No requests found, you may need to create a test request');
-    }
-  }, [userRole, userId]);
-  
   const getFilteredRequests = () => {
-    console.log('Getting filtered requests for role:', userRole);
-    console.log('History tab?', historyTab);
-    console.log('Active tab:', activeTab);
-    
     if (historyTab) {
       if (userRole === 'admin') {
-        const requests = mockRequests.filter(req => req.status === 'completed');
-        console.log('Admin history requests:', requests.length);
-        return requests;
+        return mockRequests.filter(req => req.status === 'completed');
       } else if (userRole === 'driver') {
         return mockRequests.filter(req => req.status === 'completed' && req.assignedTo === userId);
       } else {
@@ -92,25 +72,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, userId }) => {
       }
     } else {
       if (userRole === 'admin') {
-        let requests;
         switch (activeTab) {
           case 'pending':
-            requests = mockRequests.filter(req => req.status === 'pending');
-            console.log('Admin pending requests:', requests.length);
-            return requests;
+            return mockRequests.filter(req => req.status === 'pending');
           case 'assigned':
-            requests = mockRequests.filter(req => req.status === 'assigned');
-            console.log('Admin assigned requests:', requests.length);
-            return requests;
+            return mockRequests.filter(req => req.status === 'assigned');
           case 'in-progress':
-            requests = mockRequests.filter(req => req.status === 'in-progress');
-            console.log('Admin in-progress requests:', requests.length);
-            return requests;
+            return mockRequests.filter(req => req.status === 'in-progress');
           case 'all':
           default:
-            requests = mockRequests.filter(req => req.status !== 'completed');
-            console.log('Admin all active requests:', requests.length);
-            return requests;
+            return mockRequests.filter(req => req.status !== 'completed');
         }
       } else if (userRole === 'driver') {
         return mockRequests.filter(req => 
